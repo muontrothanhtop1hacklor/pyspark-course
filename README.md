@@ -1,29 +1,30 @@
-# PySpark orders exercise
 
-Bài thực hành này minh họa flow:
+Mục tiêu bài học
+Nắm vững các khái niệm nền tảng đầu tiên khi làm việc với PySpark, hiểu được luồng khởi tạo và các thao tác kiểm tra dữ liệu cơ bản.
 
-1. Đọc `orders.csv` thành DataFrame với schema tường minh.
-2. Xem schema và dữ liệu bằng `printSchema()` và `show()`.
-3. Chọn cột, lọc đơn `status = SUCCESS`, rồi `groupBy` theo `province`.
-4. Tạo temporary view và chạy SQL tính tổng `amount` theo tỉnh.
-5. Ghi bảng tổng hợp đơn thành công ra thư mục CSV dạng Spark output.
+Kiến thức cốt lõi
+* **SparkSession**: Điểm khởi đầu (entry point) bắt buộc của mọi ứng dụng PySpark.
+* **DataFrame**: Cấu trúc dữ liệu phân tán dạng bảng (gồm row và column) - cấu trúc nền tảng cho mọi tác vụ ETL trong Spark.
+* **Các hàm kiểm tra dữ liệu cơ bản:**
+  * `show()`: Hiển thị dữ liệu mẫu ra console (mặc định 20 dòng).
+  * `printSchema()`: In cấu trúc của DataFrame (tên cột, kiểu dữ liệu, có cho phép Null hay không).
+  * `count()`: Đếm tổng số bản ghi. *(Lưu ý: Đây là một Action, thao tác này sẽ kích hoạt cơ chế Lazy Evaluation để Spark thực sự chạy tính toán).*
 
-## Chạy
+Bài tập thực hành
+**Yêu cầu:** Sửa file `exercise.py` để thực hiện các bước sau:
+1. Tạo DataFrame `employee` bao gồm các trường:
+   * `employee_id`
+   * `employee_name`
+   * `department`
+   * `salary`
+2. Thực thi các lệnh kiểm tra: In schema, hiển thị dữ liệu và đếm tổng số nhân viên.
 
-Yêu cầu PySpark 4.0.1 (hoặc tương thích), Java và Hadoop native helper
-`winutils.exe` trên Windows. Đặt `HADOOP_HOME` trỏ tới thư mục Hadoop có
-`bin\winutils.exe` trước khi chạy:
+Chạy demo
 
-```powershell
-cd C:\Users\Administrator\minio-nessie\iceburg_test_project
-python -m pip install pyspark==4.0.1
-$env:HADOOP_HOME = "C:\hadoop"
-$env:Path = "$env:HADOOP_HOME\bin;$env:Path"
-python .\spark_orders_exercise.py
-```
 
-Kết quả được ghi vào `output\orders_by_province`. Đây là một thư mục chứa
-các part-file CSV do Spark tạo ra, không phải một file CSV đơn duy nhất.
 
-Nếu chỉ muốn chạy trên Linux/macOS thì không cần bước `HADOOP_HOME`; chạy
-script sau khi cài PySpark là đủ.
+
+python chapters/01_dataframe_basics/demo.py
+
+
+python chapters/01_dataframe_basics/exercise.py
