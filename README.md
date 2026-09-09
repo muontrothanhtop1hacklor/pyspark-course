@@ -57,85 +57,44 @@ Script sẽ:
 
 ---
 
-## Các lỗi đã gặp & cách khắc phục
+## Các lỗi gặp phải khi chạy Spark và cách khắc phục
 
-### Lỗi 1 — Môi trường: driver và worker dùng Python khác nhau
-
-**Triệu chứng:** Lỗi kiểu `Python in worker has different version than that in driver`, hoặc PySpark báo không tìm thấy `python`/`python3`, hoặc treo/crash khi gọi các action như `.show()`, `.collect()`.
-
-**Nguyên nhân:** Trên máy có nhiều Python (Python hệ thống, conda base, conda env riêng...). Khi không chỉ định rõ, Spark driver và các worker process có thể dùng 2 bản Python khác nhau (khác version, khác vị trí cài), dẫn đến xung đột khi serialize/deserialize dữ liệu giữa các tiến trình.
-
-**Giải pháp:** Set biến môi trường `PYSPARK_PYTHON` và `PYSPARK_DRIVER_PYTHON` trỏ **cùng một** interpreter (chính là Python trong conda env đang dùng để chạy PySpark), **trước khi** tạo `SparkSession`:
-
+**1. `Python worker failed to connect back` / Windows gợi ý tải Python từ Microsoft Store**
+Windows chặn lệnh `python` bằng "App Execution Alias" giả. → Tắt ở Settings → Apps → Advanced app settings → App execution aliases, và khai báo rõ interpreter trong code, **trước khi** tạo `SparkSession`:
 ```python
-import os
-
-os.environ["PYSPARK_PYTHON"] = r"C:\Users\Administrator\miniconda3\envs\pyspark_env\python.exe"
-os.environ["PYSPARK_DRIVER_PYTHON"] = r"C:\Users\Administrator\miniconda3\envs\pyspark_env\python.exe"
+import os, sys
+os.environ["PYSPARK_PYTHON"] = sys.executable
+os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 ```
 
-Lưu ý:
-- Phải set **trước** dòng `SparkSession.builder...getOrCreate()`, vì Spark đọc các biến này ngay lúc khởi tạo session.
-- Đường dẫn phải trỏ đúng tới `python.exe` bên trong `envs/pyspark_env` (không phải Python hệ thống hay conda base) — dùng `where python` (Windows) hoặc `which python` (macOS/Linux) sau khi `conda activate pyspark_env` để lấy đường dẫn chính xác.
-- Nếu chuyển máy/chuyển user, đường dẫn hardcode này sẽ sai — nên cân nhắc dùng biến động thay vì hardcode tuyệt đối (xem phần "Cải tiến đề xuất" bên dưới).
+**2. `Cannot run program "python3": ... cannot find the file specified`**
+Windows/Conda chỉ có `python.exe`, không có `python3.exe`, nhưng Spark mặc định tìm `python3` kiểu Linux/Mac. → Set `PYSPARK_PYTHON` như trên (không phải do App Execution Alias nên tắt nó không giải quyết được lỗi này).
 
-### Lỗi 2 — Chỗ lưu file: tưởng ghi ra 1 file CSV nhưng lại ra cả thư mục
+**3. `HADOOP_HOME and hadoop.home.dir are unset` khi `.write().csv()`**
+Đọc/`.show()` thì không sao, nhưng ghi file ra ổ đĩa Windows thì Spark cần `winutils.exe` để giả lập filesystem kiểu Hadoop. → Tải `winutils.exe` + `hadoop.dll` từ `github.com/cdarlint/winutils`, bỏ vào `C:\...\hadoop\bin\`, set `HADOOP_HOME` và thêm `%HADOOP_HOME%\bin` vào `Path`, rồi mở lại terminal.
 
-**Triệu chứng:** Sau khi chạy `df.write.csv(path)`, thư mục `output/orders_by_province/` không phải là 1 file `.csv` mà là một **folder** chứa nhiều file lạ:
-
-```
-output/orders_by_province/
-├── _SUCCESS
-├── _SUCCESS.crc
-├── part-00000-xxxxxxxx.csv
-├── .part-00000-xxxxxxxx.csv.crc
-```
-
-**Nguyên nhân:** Đây là hành vi bình thường của Spark, không phải lỗi:
-- Spark xử lý dữ liệu phân tán theo **partition**, mỗi partition ghi ra một file `part-XXXXX...`.
-- File `_SUCCESS` (rỗng) là marker báo job ghi thành công.
-- Các file `.crc` là checksum ẩn do Hadoop's local filesystem client tạo ra để kiểm tra tính toàn vẹn dữ liệu.
-- Vì dữ liệu bài tập chỉ có ít partition/dữ liệu nhỏ nên nhìn có vẻ "thừa file", nhưng với dữ liệu lớn thật sự đây chính là cách Spark ghi song song hiệu quả.
-
-**Giải pháp / lưu ý:**
-- Nếu muốn output là **đúng 1 file CSV** để dễ xem/gửi đi, gọi `.coalesce(1)` (hoặc `.repartition(1)`) trước khi `.write`:
-  ```python
-  province_summary.coalesce(1).write.mode("overwrite").option("header", True).csv(str(output_path))
-  ```
-  rồi tự đổi tên file `part-00000-*.csv` thành tên mong muốn (Spark không cho đặt tên file output trực tiếp).
-- Không nên commit các file `_SUCCESS`, `.crc`, `part-*` vào Git — nên thêm `output/` vào `.gitignore`.
-- Tương tự, thư mục `__pycache__/` (chứa file `.pyc` biên dịch sẵn) cũng **không nên commit** — hiện đang bị đẩy nhầm lên repo. Thêm vào `.gitignore`:
-  ```
-  __pycache__/
-  *.pyc
-  output/
-  .venv/
-  ```
-
-### Lỗi 3 — Vị trí đặt `import os` và set biến môi trường
-
-**Triệu chứng:** Set `os.environ["PYSPARK_PYTHON"]` nhưng vẫn bị lỗi Python mismatch như Lỗi 1.
-
-**Nguyên nhân:** Thứ tự code sai — nếu `SparkSession.builder.getOrCreate()` được gọi **trước** khi set `os.environ`, hoặc nếu Spark context đã được khởi tạo từ trước đó trong cùng tiến trình (ví dụ chạy trong notebook, chạy lại cell nhiều lần), thì việc set biến môi trường sau đó sẽ **không có tác dụng** vì Spark JVM/worker process đã được fork với biến môi trường cũ.
-
-**Giải pháp:** Đảm bảo thứ tự trong file luôn là:
-1. `import os`
-2. Set toàn bộ `os.environ[...]` cần thiết
-3. Sau đó mới `import pyspark` / tạo `SparkSession`
-
-Đây cũng là lý do trong `spark_orders_exercise.py`, khối set `PYSPARK_PYTHON` được đặt ngay sau phần `import`, ở đầu file, trước khi `main()` chạy và tạo `SparkSession`.
+**4. `ModuleNotFoundError: No module named 'pyspark'`**
+Terminal đang ở env `base` chứ chưa activate đúng env cài pyspark. → `conda activate pyspark_env` rồi `pip install pyspark`.
 
 ---
 
-## Cải tiến đề xuất (chưa bắt buộc, để tham khảo thêm)
+## Lưu ý về thư mục output
 
-- Thay vì hardcode đường dẫn Python tuyệt đối, có thể lấy tự động bằng `sys.executable`:
-  ```python
-  import sys
-  os.environ["PYSPARK_PYTHON"] = sys.executable
-  os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
-  ```
-  Cách này tự động đúng theo interpreter đang chạy script, không phụ thuộc máy/user cụ thể.
-- Thêm file `.gitignore` để tránh commit nhầm `__pycache__/`, `output/`, file `.crc`.
-- Có thể thử ghi output ra Parquet (`.parquet` thay vì `.csv`) để so sánh, vì Parquet là định dạng cột (columnar), giữ nguyên kiểu dữ liệu (ví dụ `DecimalType`), nén tốt hơn — đúng với phần Chapter 7 (Reading & Writing Data) của tài liệu.
+Khi ghi CSV, Spark không tạo 1 file duy nhất mà tạo cả folder gồm `_SUCCESS`, các file `.crc` (checksum) và `part-00000-*.csv` (mỗi partition ghi 1 file) — đây là hành vi bình thường, không phải lỗi. Nếu muốn ra đúng 1 file CSV, gọi `.coalesce(1)` trước khi `.write`. Nên thêm `.gitignore` để không commit nhầm các file này và `__pycache__/`:
 
+```
+__pycache__/
+*.pyc
+output/
+.venv/
+```
+
+## Bài tập đã hoàn thành
+
+- [x] Tạo DataFrame đơn hàng: `order_id`, `customer_id`, `province`, `amount`, `status`
+- [x] Print schema, show dữ liệu, select cột
+- [x] Filter `status = SUCCESS`
+- [x] Group by `province`, tính `count` order và `sum amount`
+- [x] Đọc `orders.csv` bằng PySpark, gộp với dữ liệu mock
+- [x] Ghi kết quả ra CSV (`output/orders_by_province`)
+- [x] Tạo temp view, chạy SQL tính tổng `amount` theo `province`
