@@ -57,7 +57,7 @@ Script sẽ:
 
 ---
 
-## Các lỗi gặp phải khi chạy Spark và cách khắc phục
+## Các lỗi gặp phải khi chạy Spark và kinh nghiệm rút ra
 
 **1. `Python worker failed to connect back` / Windows gợi ý tải Python từ Microsoft Store**
 Windows chặn lệnh `python` bằng "App Execution Alias" giả. → Tắt ở Settings → Apps → Advanced app settings → App execution aliases, và khai báo rõ interpreter trong code, **trước khi** tạo `SparkSession`:
@@ -89,12 +89,3 @@ output/
 .venv/
 ```
 
-## Bài tập đã hoàn thành
-
-- [x] Tạo DataFrame đơn hàng: `order_id`, `customer_id`, `province`, `amount`, `status`
-- [x] Print schema, show dữ liệu, select cột
-- [x] Filter `status = SUCCESS`
-- [x] Group by `province`, tính `count` order và `sum amount`
-- [x] Đọc `orders.csv` bằng PySpark, gộp với dữ liệu mock
-- [x] Ghi kết quả ra CSV (`output/orders_by_province`)
-- [x] Tạo temp view, chạy SQL tính tổng `amount` theo `province`
