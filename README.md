@@ -21,10 +21,10 @@ Kiến thức cốt lõi
 
 Chạy demo
 
+'''bash
 
 
+ # python chapters/01_dataframe_basics/demo.py
 
-python chapters/01_dataframe_basics/demo.py
 
-
-python chapters/01_dataframe_basics/exercise.py
+ # python chapters/01_dataframe_basics/exercise.py
