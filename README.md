@@ -1,5 +1,5 @@
 
-Mục tiêu bài học
+ ##Mục tiêu bài học
 Nắm vững các khái niệm nền tảng đầu tiên khi làm việc với PySpark, hiểu được luồng khởi tạo và các thao tác kiểm tra dữ liệu cơ bản.
 
 Kiến thức cốt lõi
@@ -10,7 +10,7 @@ Kiến thức cốt lõi
   * `printSchema()`: In cấu trúc của DataFrame (tên cột, kiểu dữ liệu, có cho phép Null hay không).
   * `count()`: Đếm tổng số bản ghi. *(Lưu ý: Đây là một Action, thao tác này sẽ kích hoạt cơ chế Lazy Evaluation để Spark thực sự chạy tính toán).*
 
-Bài tập thực hành
+ ##Bài tập thực hành
 **Yêu cầu:** Sửa file `exercise.py` để thực hiện các bước sau:
 1. Tạo DataFrame `employee` bao gồm các trường:
    * `employee_id`
