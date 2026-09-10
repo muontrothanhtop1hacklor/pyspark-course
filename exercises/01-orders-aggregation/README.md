@@ -42,7 +42,7 @@ Bài thực hành trọng tâm về **DataFrame API** và **Spark SQL**: đọc 
 | `province` | Tỉnh/thành của đơn hàng |
 | `amount` | Giá trị đơn hàng |
 | `status` | Trạng thái đơn hàng (ví dụ `SUCCESS`) |
-| `order_date` | Ngày đặt hàng |
+
 
 Ngoài dữ liệu đọc từ file, script còn tạo thêm một DataFrame mock ngay trong code với cùng schema, rồi gộp hai DataFrame bằng `unionByName` để có bộ dữ liệu đầy đủ hơn trước khi xử lý.
 
