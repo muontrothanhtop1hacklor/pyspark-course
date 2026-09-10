@@ -1,0 +1,32 @@
+[
+  {
+    "employee_id": 19238,
+    "role": "Data Analyst",
+    "location": "Seattle, WA"
+  },
+  {
+    "employee_id": 19239,
+    "role": "Software Engineer",
+    "location": "Seattle, WA"
+  },
+  {
+    "employee_id": 19240,
+    "role": "IT Specialist",
+    "location": "Seattle, WA"
+  },
+  {
+    "employee_id": 19241,
+    "role": "Data Analyst",
+    "location": "New York, NY"
+  },
+  {
+    "employee_id": 19242,
+    "role": "Recruiter",
+    "location": "San Francisco, CA"
+  },
+  {
+    "employee_id": 19243,
+    "role": "Product Manager",
+    "location": "New York, NY"
+  }
+]

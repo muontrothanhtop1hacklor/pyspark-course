@@ -1,8 +1,9 @@
 """PySpark practice: read, transform, summarize, and write order data."""
 
-from pathlib import Path
-
 from decimal import Decimal
+import os
+from pathlib import Path
+import sys
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import count, sum as spark_sum
@@ -13,11 +14,9 @@ from pyspark.sql.types import (
     StructField,
     StructType,
 )
-import os
 
-os.environ["PYSPARK_PYTHON"] = r"C:\Users\Administrator\miniconda3\envs\pyspark_env\python.exe"
-os.environ["PYSPARK_DRIVER_PYTHON"] = r"C:\Users\Administrator\miniconda3\envs\pyspark_env\python.exe"
-
+os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
+os.environ.setdefault("PYSPARK_DRIVER_PYTHON", sys.executable)
 
 ORDER_SCHEMA = StructType(
     [

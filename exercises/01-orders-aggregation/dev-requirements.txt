@@ -1,0 +1,6 @@
+pytest
+setuptools
+wheel
+# TODO: update the necessary requirements to develop this package
+pyspark==4.0.1
+boto3>=1.35
