@@ -167,3 +167,47 @@ output/lakehouse/gold/order_summary/
 | Bucket không tồn tại | Script tự tạo bucket `lakehouse-demo` nếu chưa có; nếu vẫn lỗi, kiểm tra quyền tài khoản MinIO |
 | Lỗi Hadoop khi ghi file local trên Windows | Cài `winutils.exe`, set `HADOOP_HOME` và thêm vào `Path` |
 | Thiếu Java / `JAVA_HOME` | Cài JDK và set biến môi trường `JAVA_HOME` |
+
+## 9. Mở rộng nhiều nguồn cho bài Airflow
+
+Bài 2 gốc giữ nguyên pipeline đơn nguồn:
+
+```text
+orders.csv -> Bronze -> Silver -> Gold -> MinIO
+```
+
+Để phục vụ bài 3 về Airflow orchestration, repository bổ sung một pipeline
+batch nhiều nguồn riêng biệt:
+
+```text
+orders_web.csv    ─┐
+orders_mobile.csv ├─> Bronze riêng từng nguồn -> Union -> Silver -> Gold
+orders_store.csv  ─┘
+```
+
+Các runner mở rộng gồm:
+
+- `run_bronze_web.py`
+- `run_bronze_mobile.py`
+- `run_bronze_store.py`
+- `run_silver.py`
+- `run_gold.py`
+- `lakehouse_batch_common.py`
+
+Ba runner Bronze dùng chung hàm trong `lakehouse_batch_common.py` để tránh
+lặp logic. Các bước Silver và Gold import trực tiếp `build_silver()`,
+`build_gold()` và `upload_directory_to_minio()` từ
+`spark_orders_lakehouse.py`, không sao chép lại logic của bài 2 gốc.
+
+Pipeline mở rộng ghi thêm Parquet trung gian tại:
+
+```text
+output/bronze/web/
+output/bronze/mobile/
+output/bronze/store/
+output/silver/
+```
+
+Phần điều phối bằng Airflow nằm trong
+`exercises/03-airflow-orchestration/`, với ba task Bronze hội tụ vào Silver
+và sau đó chạy Gold.
