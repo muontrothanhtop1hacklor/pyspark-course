@@ -1,112 +1,83 @@
-# PySpark Course — From Spark Basics to Lakehouse Orchestration
+# PySpark Course - From Spark Basics to Lakehouse Orchestration
 
-Khóa học thực hành PySpark theo lộ trình từ đọc/ghi dữ liệu, DataFrame API,
-Spark SQL đến Data Lakehouse và Airflow orchestration.
-
-Tài liệu tham khảo chính: [PySpark User Guide (Spark 4.0.1)](https://spark.apache.org/docs/4.0.1/api/python/user_guide/index.html)
-- Chapter 1 — DataFrames: Create, View, Manipulation
-- Chapter 3 — Function Junction: Clean / Transform / Summarize data
-- Chapter 6 — Old SQL, New Tricks: Running SQL with PySpark
-- Chapter 7 — Load and Behold: Reading & Writing Data
+Khóa học thực hành PySpark trên Windows, đi từ đọc/ghi dữ liệu cơ bản đến
+DataFrame API, Spark SQL, Lakehouse Bronze/Silver/Gold, MinIO và Airflow.
 
 ## Mục tiêu
 
-Hiểu các flow:
+- Đọc và ghi CSV/JSON bằng Spark, hiểu output dạng thư mục part-file.
+- Làm sạch dữ liệu bằng DataFrame API.
+- Lọc, group và aggregation bằng DataFrame API và Spark SQL.
+- Xây dựng pipeline Bronze/Silver/Gold.
+- Upload output lên MinIO bằng `boto3`.
+- Dùng Airflow điều phối nhiều job Spark theo dependency.
+
+## Cấu trúc
 
 ```text
-đọc/tạo dữ liệu → xử lý bằng Spark → ghi kết quả
-orders.csv → Bronze → Silver → Gold → MinIO
-Spark jobs → Airflow điều phối theo dependency
-```
-
-## Cấu trúc project
-
-```
 pyspark-course/
-├── docker-compose.yml         # MinIO, MinIO init và Nessie dùng chung
+├── docker-compose.yml
+├── docker/
+│   └── airflow/
+│       └── Dockerfile
 ├── exercises/
-│   ├── 00-read-write-basics/  # Đọc/ghi CSV và JSON
+│   ├── 00-read-write-basics/
 │   ├── 00b-data-cleaning-practice/
-│   │                           # Các thao tác làm sạch DataFrame
-│   ├── 01-orders-aggregation/ # DataFrame API và Spark SQL
-│   ├── 02-orders-lakehouse/   # Bronze/Silver/Gold và upload MinIO
+│   ├── 01-orders-aggregation/
+│   ├── 02-orders-lakehouse/
 │   └── 03-airflow-orchestration/
-│                               # Airflow mô phỏng điều phối pipeline
 └── README.md
 ```
 
-## Lộ trình học
+## Môi trường host
 
-1. [Đọc/ghi dữ liệu cơ bản](./exercises/00-read-write-basics/): làm quen với
-   CSV và JSON.
-2. [Data cleaning](./exercises/00b-data-cleaning-practice/): xử lý null,
-   NaN và lọc dữ liệu bằng DataFrame API.
-3. [Orders aggregation](./exercises/01-orders-aggregation/): đọc đơn hàng,
-   `select`, `filter`, `groupBy`, aggregation và Spark SQL.
-4. [Orders lakehouse](./exercises/02-orders-lakehouse/): xây dựng Bronze,
-   Silver, Gold và lưu output lên MinIO.
-5. [Airflow orchestration](./exercises/03-airflow-orchestration/): điều phối
-   tuần tự Bronze → Silver → Gold. DAG hiện tại chỉ mô phỏng task bằng log,
-   chưa chạy Spark hay xử lý dữ liệu thật.
+Khuyến nghị dùng Python 3.11 qua Conda:
 
-## MinIO, Iceberg và Nessie
+```powershell
+conda create -n pyspark_env python=3.11 -y
+conda activate pyspark_env
+pip install pyspark==4.0.1 boto3 pytest
+```
 
-`docker-compose.yml` ở root cung cấp MinIO và Nessie dùng chung. MinIO đóng
-vai trò object storage S3-compatible. Bài lakehouse dùng MinIO để lưu output;
-Iceberg/Nessie là hướng mở rộng để quản lý table và metadata. Bài Airflow tập
-trung vào orchestration, không thay thế Spark trong việc xử lý dữ liệu.
+Java/JDK 17 hoặc 21 là cần thiết cho Spark 4.0.1.
 
-Khởi động các service:
+## Chạy Orders Lakehouse
+
+Khởi động MinIO và Nessie:
 
 ```powershell
 docker compose up -d
 ```
 
 MinIO API chạy tại `http://localhost:9000`, console tại
-`http://localhost:9001`.
+`http://localhost:9001`. Tài khoản MinIO là `admin/password123`.
 
-## Yêu cầu môi trường
-
-- Python (khuyến nghị dùng qua **conda/venv riêng**, không dùng Python hệ thống)
-- Java 8/11/17 (Spark cần JDK, không chạy được nếu chỉ có JRE hoặc thiếu `JAVA_HOME`)
-- PySpark (cài theo README của từng bài)
-
-Cài đặt nhanh:
-
-```bash
-conda create -n pyspark_env python=3.10 -y
-conda activate pyspark_env
-pip install pyspark==4.0.1 boto3 pytest
-```
-
-## Chạy bài orders aggregation
+Pipeline nhiều nguồn có thể chạy thủ công bằng host environment:
 
 ```powershell
-cd .\exercises\01-orders-aggregation
-python .\spark_orders_exercise.py
+$python = "C:\Users\Administrator\miniconda3\envs\pyspark_env\python.exe"
+$dir = ".\exercises\02-orders-lakehouse"
+& $python "$dir\run_bronze_web.py"
+& $python "$dir\run_bronze_mobile.py"
+& $python "$dir\run_bronze_store.py"
+& $python "$dir\run_silver.py"
+& $python "$dir\run_gold.py"
 ```
 
-Script sẽ:
-1. Tạo `SparkSession`
-2. Tạo DataFrame mock + đọc `orders.csv`, gộp lại bằng `unionByName`
-3. In schema, show dữ liệu, select cột, filter `status = SUCCESS`
-4. Group by `province`, tính `count` order và `sum amount`
-5. Tạo temp view, chạy SQL tương đương
-6. Ghi kết quả ra `output/orders_by_province` (CSV)
+Các output trung gian nằm tại:
 
-Chi tiết xem [README của bài aggregation](./exercises/01-orders-aggregation/README.md).
-
-## Chạy bài lakehouse
-
-```powershell
-cd .\exercises\02-orders-lakehouse
-python -m pip install pyspark boto3
-python .\spark_orders_lakehouse.py
+```text
+exercises/02-orders-lakehouse/output/bronze/web/
+exercises/02-orders-lakehouse/output/bronze/mobile/
+exercises/02-orders-lakehouse/output/bronze/store/
+exercises/02-orders-lakehouse/output/silver/
 ```
 
-Chi tiết flow Bronze/Silver/Gold xem [README của bài lakehouse](./exercises/02-orders-lakehouse/README.md).
+Output CSV được upload vào bucket `lakehouse-demo`. Endpoint mặc định là
+`http://localhost:9000` khi chạy trên host; trong Airflow container Compose
+override endpoint thành `http://minio:9000`.
 
-## Chạy bài Airflow
+## Airflow orchestration
 
 DAG nằm tại:
 
@@ -114,48 +85,52 @@ DAG nằm tại:
 exercises/03-airflow-orchestration/dags/orders_lakehouse_dag.py
 ```
 
-DAG có ba task tuần tự:
+Flow:
 
 ```text
-bronze_task → silver_task → gold_task
+bronze_web_task ─┐
+bronze_mobile_task├──> silver_task -> gold_task
+bronze_store_task ┘
 ```
 
-Mỗi task chỉ in log để minh họa orchestration. Cài Airflow bằng Docker Compose
-hoặc chạy trong WSL/Linux, mount thư mục `dags/` vào Airflow scheduler rồi
-trigger DAG `orders_lakehouse_pipeline` thủ công trên UI.
+Ba task Bronze nằm trong `TaskGroup` và hội tụ vào Silver. Airflow container
+được build từ `docker/airflow/Dockerfile`, bao gồm Java 17, PySpark 4.0.1 và
+`boto3`. Đăng nhập Airflow tại `http://localhost:8080` bằng:
 
-Chi tiết xem [README của bài Airflow](./exercises/03-airflow-orchestration/README.md).
-
----
-
-## Các lỗi gặp phải khi chạy Spark và kinh nghiệm rút ra
-
-**1. `Python worker failed to connect back` / Windows gợi ý tải Python từ Microsoft Store**
-Windows chặn lệnh `python` bằng "App Execution Alias" giả. → Tắt ở Settings → Apps → Advanced app settings → App execution aliases, và khai báo rõ interpreter trong code, **trước khi** tạo `SparkSession`:
-```python
-import os, sys
-os.environ["PYSPARK_PYTHON"] = sys.executable
-os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
+```text
+Username: admin
+Password: admin
 ```
 
-**2. `Cannot run program "python3": ... cannot find the file specified`**
-Windows/Conda chỉ có `python.exe`, không có `python3.exe`, nhưng Spark mặc định tìm `python3` kiểu Linux/Mac. → Set `PYSPARK_PYTHON` như trên (không phải do App Execution Alias nên tắt nó không giải quyết được lỗi này).
+Executor hiện tại là `SequentialExecutor`, nên DAG giữ đúng dependency nhưng
+ba Bronze sẽ được thực thi tuần tự. Đổi sang executor hỗ trợ concurrency nếu
+cần chạy đồng thời thật.
 
-**3. `HADOOP_HOME and hadoop.home.dir are unset` khi `.write().csv()`**
-Đọc/`.show()` thì không sao, nhưng ghi file ra ổ đĩa Windows thì Spark cần `winutils.exe` để giả lập filesystem kiểu Hadoop. → Tải `winutils.exe` + `hadoop.dll` từ `github.com/cdarlint/winutils`, bỏ vào `C:\...\hadoop\bin\`, set `HADOOP_HOME` và thêm `%HADOOP_HOME%\bin` vào `Path`, rồi mở lại terminal.
+## MinIO, Iceberg và Nessie
 
-**4. `ModuleNotFoundError: No module named 'pyspark'`**
-Terminal đang ở env `base` chứ chưa activate đúng env cài pyspark. → `conda activate pyspark_env` rồi `pip install pyspark`.
+- `minio`: S3-compatible object storage, API `http://localhost:9000`.
+- `minio-init`: tạo bucket `warehouse`.
+- `nessie`: catalog cho phần mở rộng Iceberg.
+- `lakehouse-demo`: bucket được các script PySpark tự tạo khi upload.
 
----
+## Spark output và troubleshooting
 
-## Lưu ý về thư mục output
+Spark ghi CSV/Parquet thành thư mục gồm `_SUCCESS`, các file `part-*` và
+checksum, không phải một file duy nhất. `output/`, `__pycache__/` và `.pyc`
+đã được loại khỏi Git bằng `.gitignore`.
 
-Khi ghi CSV, Spark không tạo 1 file duy nhất mà tạo cả folder gồm `_SUCCESS`, các file `.crc` (checksum) và `part-00000-*.csv` (mỗi partition ghi 1 file) — đây là hành vi bình thường, không phải lỗi. Nếu muốn ra đúng 1 file CSV, gọi `.coalesce(1)` trước khi `.write`. Nên thêm `.gitignore` để không commit nhầm các file này và `__pycache__/`:
+Nếu Spark trên Windows cần Hadoop native helper:
 
+```powershell
+$env:HADOOP_HOME = "C:\hadoop"
+$env:Path = "$env:HADOOP_HOME\bin;$env:Path"
 ```
-__pycache__/
-*.pyc
-output/
-.venv/
-```
+
+Nếu không kết nối được MinIO, kiểm tra `docker compose up -d` và các biến
+`MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`.
+
+## Tài liệu tham khảo
+
+- [Spark 4.0.1 User Guide](https://spark.apache.org/docs/4.0.1/)
+- [Orders Lakehouse README](./exercises/02-orders-lakehouse/README.md)
+- [Airflow orchestration README](./exercises/03-airflow-orchestration/README.md)

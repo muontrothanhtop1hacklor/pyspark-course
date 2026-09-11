@@ -1,74 +1,77 @@
-# Orders Data Lakehouse
+# 02 – Orders Lakehouse (Bronze → Silver → Gold → MinIO)
 
-Bài thực hành mô phỏng flow xử lý dữ liệu đơn hàng:
+Bài nâng cao, mô phỏng một flow **Data Lakehouse** đơn giản: đọc `orders.csv`, xử lý qua ba lớp **Bronze → Silver → Gold**, rồi upload output lên **MinIO** bằng `boto3`.
 
 ```text
-orders.csv -> Bronze -> Silver -> Gold -> MinIO
+orders.csv
+    ↓
+Bronze   (raw + metadata)
+    ↓
+Silver   (làm sạch, chuẩn hóa)
+    ↓
+Gold     (tổng hợp theo province)
+    ↓
+MinIO    (upload qua boto3)
 ```
 
-## Cấu trúc
+## 1. Mục tiêu
+
+- Hiểu kiến trúc Lakehouse theo lớp Bronze/Silver/Gold.
+- Thực hành làm sạch và chuẩn hóa dữ liệu thực tế (dữ liệu "bẩn": sai định dạng số, sai chính tả, thiếu trường...).
+- Tổng hợp dữ liệu theo `province` ở lớp Gold.
+- Upload output (các part-files do Spark tạo ra) lên MinIO qua S3-compatible API.
+
+## 2. Cấu trúc
 
 ```text
 02-orders-lakehouse/
-├── README.md
+├── README.md                     ← file này
 ├── orders.csv
 └── spark_orders_lakehouse.py
 ```
 
-## Các layer
+`docker-compose.yml` dùng để chạy MinIO **nằm ở root của repository**, không nằm riêng trong thư mục này — xem hướng dẫn ở bước "Cách chạy" bên dưới.
 
-- **Bronze**: đọc dữ liệu raw từ `orders.csv`, thêm `source_file` và `load_time`.
-- **Silver**: làm sạch dữ liệu, chuẩn hóa `status`, cast kiểu dữ liệu và loại
-  record không hợp lệ.
-- **Gold**: tổng hợp theo `province`, gồm `total_orders`, `total_amount`,
-  `success_orders` và `failed_orders`.
+## 3. Script chính: `spark_orders_lakehouse.py`
 
-Output local được ghi vào:
+### Bronze layer
 
-```text
-output/lakehouse/bronze/orders/
-output/lakehouse/silver/orders/
-output/lakehouse/gold/order_summary/
-```
+- Đọc dữ liệu raw từ `orders.csv` bằng PySpark.
+- Thêm các cột metadata: `source_file`, `load_time`, `ingest_seq`.
+- Ghi output local vào `output/lakehouse/bronze/orders/`.
 
-Mỗi đường dẫn là một thư mục Spark output chứa các part-file CSV.
+### Silver layer
 
-## Chạy MinIO
+Làm sạch và chuẩn hóa dữ liệu Bronze:
 
-`docker-compose.yml` dùng chung nằm ở root repository:
+- Parse `order_id`; loại các record thiếu hoặc `order_id` không hợp lệ.
+- Chuẩn hóa `customer_id`.
+- Chuẩn hóa tên `province`, hỗ trợ các biến thể như: `Hanoi`, `Ha Noi`, `HN`, `Da Nang`, `Danang`, `Ho Chi Minh`, `Sai Gon`, `Can Tho`.
+- Parse `amount`:
+  - Xử lý giá trị có dấu phẩy, ví dụ `1,250,000`.
+  - Xử lý giá trị có hậu tố `k`, ví dụ `200k`.
+  - Loại các giá trị không parse được hoặc `amount <= 0`.
+- Chuẩn hóa `status` thành chữ hoa, sửa một số lỗi chính tả thường gặp:
+  - `SUCCES` → `SUCCESS`
+  - `FAIL` → `FAILED`
+  - `CANCELED` → `CANCELLED`
+- Parse `order_date`; loại các record có ngày không hợp lệ.
+- Deduplicate theo `order_id`, giữ lại record được nạp sớm nhất dựa trên `ingest_seq`.
+- Ghi output local vào `output/lakehouse/silver/orders/`.
 
-```powershell
-cd C:\Users\Administrator\minio-nessie
-docker compose up -d
-```
+### Gold layer
 
-## Chạy bài thực hành
+- Group theo `province`.
+- Tính các cột tổng hợp: `total_orders`, `total_amount`, `success_orders`, `failed_orders`.
+- Ghi output local vào `output/lakehouse/gold/order_summary/`.
 
-```powershell
-cd C:\Users\Administrator\minio-nessie\exercises\02-orders-lakehouse
-python -m pip install pyspark boto3
-python .\spark_orders_lakehouse.py
-```
+### Upload MinIO
 
-Trên Windows, nếu Spark yêu cầu Hadoop native helper, cấu hình thêm:
+Script dùng `boto3` (S3-compatible API) để:
 
-```powershell
-$env:HADOOP_HOME = "C:\hadoop"
-$env:Path = "$env:HADOOP_HOME\bin;$env:Path"
-```
-
-## Upload lên MinIO
-
-Script mặc định kết nối tới:
-
-```text
-Endpoint: http://localhost:9000
-Access key: admin
-Secret key: password123
-Bucket: lakehouse-demo
-```
-
-Các object được upload theo prefix:
+1. Kết nối tới MinIO.
+2. Tạo bucket `lakehouse-demo` nếu bucket chưa tồn tại.
+3. Upload các part-files do Spark tạo ra ở cả ba lớp lên các prefix tương ứng:
 
 ```text
 s3://lakehouse-demo/bronze/orders/
@@ -76,10 +79,91 @@ s3://lakehouse-demo/silver/orders/
 s3://lakehouse-demo/gold/order_summary/
 ```
 
-Có thể ghi đè cấu hình bằng các biến môi trường:
+> Lưu ý: việc upload dùng `boto3` gọi trực tiếp S3 API, **không** phải Spark ghi trực tiếp qua S3A connector. Iceberg/Nessie hiện **chưa** được dùng trong pipeline này — Nessie trong `docker-compose.yml` chỉ đang được chuẩn bị sẵn cho phần mở rộng kiến trúc Lakehouse/Iceberg trong tương lai.
+
+## 4. Cấu hình MinIO
+
+Giá trị mặc định trong script:
+
+```text
+MINIO_ENDPOINT=http://localhost:9000
+MINIO_ACCESS_KEY=admin
+MINIO_SECRET_KEY=password123
+```
+
+Có thể ghi đè bằng biến môi trường trước khi chạy:
 
 ```powershell
 $env:MINIO_ENDPOINT = "http://localhost:9000"
 $env:MINIO_ACCESS_KEY = "admin"
 $env:MINIO_SECRET_KEY = "password123"
 ```
+
+## 5. Yêu cầu môi trường
+
+- Python 3.11 (cùng môi trường Conda/venv của toàn project)
+- Java/JDK
+- PySpark
+- boto3
+- Docker Desktop (để chạy MinIO)
+
+```powershell
+pip install pyspark boto3
+```
+
+## 6. Cách chạy
+
+1. Về thư mục root của repository và khởi động MinIO:
+
+```powershell
+cd C:\đường-dẫn-tới\pyspark-course
+docker compose up -d
+```
+
+2. Chuyển vào thư mục bài này:
+
+```powershell
+cd .\exercises\02-orders-lakehouse
+```
+
+3. Cài PySpark và boto3 (nếu chưa cài):
+
+```powershell
+pip install pyspark boto3
+```
+
+4. Nếu Windows báo lỗi Hadoop khi ghi file local, cấu hình `HADOOP_HOME`:
+
+```powershell
+$env:HADOOP_HOME = "C:\hadoop"
+$env:Path = "$env:HADOOP_HOME\bin;$env:Path"
+```
+
+5. Chạy script:
+
+```powershell
+python .\spark_orders_lakehouse.py
+```
+
+## 7. Kết quả mong đợi
+
+- Ba thư mục output local, mỗi thư mục chứa `_SUCCESS`, các file `part-*.csv` (hoặc định dạng tương ứng) và file checksum — vì Spark luôn ghi ra một **thư mục part-files**, không phải một file duy nhất:
+
+```text
+output/lakehouse/bronze/orders/
+output/lakehouse/silver/orders/
+output/lakehouse/gold/order_summary/
+```
+
+- Các file trên được upload lên MinIO. Bạn có thể kiểm tra qua MinIO Console tại `http://localhost:9001` (user `admin` / password `password123`), trong bucket `lakehouse-demo`.
+
+## 8. Troubleshooting
+
+| Vấn đề | Cách xử lý |
+|---|---|
+| Docker Desktop chưa chạy | Mở Docker Desktop, sau đó `docker compose up -d` ở root |
+| Không kết nối được MinIO (`Connection refused`) | Kiểm tra container `minio` đang chạy (`docker ps`), kiểm tra `MINIO_ENDPOINT` đúng cổng `9000` |
+| Lỗi xác thực khi upload (`Access Denied`) | Kiểm tra `MINIO_ACCESS_KEY`/`MINIO_SECRET_KEY` khớp với cấu hình trong `docker-compose.yml` (mặc định `admin`/`password123`) |
+| Bucket không tồn tại | Script tự tạo bucket `lakehouse-demo` nếu chưa có; nếu vẫn lỗi, kiểm tra quyền tài khoản MinIO |
+| Lỗi Hadoop khi ghi file local trên Windows | Cài `winutils.exe`, set `HADOOP_HOME` và thêm vào `Path` |
+| Thiếu Java / `JAVA_HOME` | Cài JDK và set biến môi trường `JAVA_HOME` |
