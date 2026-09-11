@@ -211,3 +211,33 @@ output/silver/
 Phần điều phối bằng Airflow nằm trong
 `exercises/03-airflow-orchestration/`, với ba task Bronze hội tụ vào Silver
 và sau đó chạy Gold.
+## 10. Quá trình phát triển và tư duy thiết kế
+
+Phần mở rộng này được xây dựng theo các bước, với ưu tiên là không làm hỏng
+pipeline bài 2 đang chạy được:
+
+1. **Xác định vấn đề môi trường:** bài Iceberg cần Spark 3.5.x, trong khi các
+   bài lakehouse hiện tại dùng PySpark 4.0.1. Vì vậy môi trường Iceberg được
+   tách riêng, còn `pyspark_env` được giữ cho pipeline Spark 4.0.1.
+2. **Giữ nguyên bài 2 gốc:** `spark_orders_lakehouse.py` vẫn xử lý
+   `orders.csv` theo flow đơn nguồn và tiếp tục là nơi chứa logic
+   `build_silver()`, `build_gold()` và upload MinIO.
+3. **Mở rộng theo nhu cầu Airflow:** thay vì nhồi thêm nhiều nguồn vào một
+   lần chạy, tạo ba nguồn batch tĩnh `web`, `mobile` và `store`. Mỗi nguồn có
+   một Bronze job độc lập, có `source_channel` để truy vết nguồn dữ liệu.
+4. **Tách phần dùng chung:** logic tạo Spark session, đọc raw schema, tạo
+   Bronze, ghi Parquet và upload được đưa vào
+   `lakehouse_batch_common.py`. Các runner riêng chỉ chọn nguồn và channel,
+   tránh sao chép logic.
+5. **Tạo điểm giao giữa các layer:** Bronze ghi Parquet trung gian để
+   `run_silver.py` có thể union cả ba nguồn. Silver và Gold vẫn gọi lại các
+   hàm xử lý của bài 2, nhờ đó quy tắc làm sạch và tổng hợp chỉ có một nơi
+   chịu trách nhiệm.
+6. **Đưa orchestration ra Airflow:** DAG dùng `TaskGroup` cho ba Bronze task,
+   sau đó hội tụ vào Silver và Gold. Như vậy code xử lý dữ liệu vẫn thuộc về
+   Spark, còn Airflow chỉ điều phối thứ tự, dependency và trạng thái.
+
+Kết quả là có hai cách chạy cùng tồn tại: chạy từng script trực tiếp bằng
+`pyspark_env` trên host để học và kiểm thử, hoặc để Airflow container gọi các
+script đó qua DAG. Đây là mở rộng thêm cho bài 3, không phải thay thế pipeline
+đơn nguồn của bài 2.
