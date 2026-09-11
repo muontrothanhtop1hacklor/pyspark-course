@@ -1,0 +1,13 @@
+# Python dependencies for the separate host Spark 3.5.7 + Iceberg Bronze experiment.
+pyspark==3.5.7
+boto3>=1.35
+
+# Maven packages are resolved by spark.jars.packages in
+# spark_orders_iceberg_bronze.py; they are not pip packages:
+# org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.11.0
+# org.apache.iceberg:iceberg-nessie:1.11.0
+# org.apache.iceberg:iceberg-aws-bundle:1.11.0
+# If Ivy cannot reach repo1.maven.org, use:
+# spark.jars.repositories=https://repo.maven.apache.org/maven2
+# The Iceberg runtime already contains the Nessie Catalog implementation;
+# the optional Nessie SQL extension is not required for DataFrame writeTo().

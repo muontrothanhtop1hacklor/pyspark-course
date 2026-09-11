@@ -1,6 +1,7 @@
-# PySpark Course — Orders Exercise
+# PySpark Course — From Spark Basics to Lakehouse Orchestration
 
-Bài thực hành PySpark: tạo/đọc dữ liệu đơn hàng, xử lý bằng DataFrame API & Spark SQL, ghi kết quả ra CSV.
+Khóa học thực hành PySpark theo lộ trình từ đọc/ghi dữ liệu, DataFrame API,
+Spark SQL đến Data Lakehouse và Airflow orchestration.
 
 Tài liệu tham khảo chính: [PySpark User Guide (Spark 4.0.1)](https://spark.apache.org/docs/4.0.1/api/python/user_guide/index.html)
 - Chapter 1 — DataFrames: Create, View, Manipulation
@@ -10,41 +11,79 @@ Tài liệu tham khảo chính: [PySpark User Guide (Spark 4.0.1)](https://spark
 
 ## Mục tiêu
 
-Hiểu flow cơ bản: **đọc/tạo dữ liệu → xử lý bằng Spark → ghi kết quả**.
+Hiểu các flow:
+
+```text
+đọc/tạo dữ liệu → xử lý bằng Spark → ghi kết quả
+orders.csv → Bronze → Silver → Gold → MinIO
+Spark jobs → Airflow điều phối theo dependency
+```
 
 ## Cấu trúc project
 
 ```
 pyspark-course/
-├── spark_orders_exercise.py   # Script chính
-├── orders.csv                 # Dữ liệu đầu vào
-├── output/
-│   └── orders_by_province/    # Kết quả ghi ra (Spark tự tạo nhiều file, xem mục "Lỗi 2")
-├── pyspark_test/
-├── tests/
-├── pyproject.toml
-├── dev-requirements.txt
+├── docker-compose.yml         # MinIO, MinIO init và Nessie dùng chung
+├── exercises/
+│   ├── 00-read-write-basics/  # Đọc/ghi CSV và JSON
+│   ├── 00b-data-cleaning-practice/
+│   │                           # Các thao tác làm sạch DataFrame
+│   ├── 01-orders-aggregation/ # DataFrame API và Spark SQL
+│   ├── 02-orders-lakehouse/   # Bronze/Silver/Gold và upload MinIO
+│   └── 03-airflow-orchestration/
+│                               # Airflow mô phỏng điều phối pipeline
 └── README.md
 ```
+
+## Lộ trình học
+
+1. [Đọc/ghi dữ liệu cơ bản](./exercises/00-read-write-basics/): làm quen với
+   CSV và JSON.
+2. [Data cleaning](./exercises/00b-data-cleaning-practice/): xử lý null,
+   NaN và lọc dữ liệu bằng DataFrame API.
+3. [Orders aggregation](./exercises/01-orders-aggregation/): đọc đơn hàng,
+   `select`, `filter`, `groupBy`, aggregation và Spark SQL.
+4. [Orders lakehouse](./exercises/02-orders-lakehouse/): xây dựng Bronze,
+   Silver, Gold và lưu output lên MinIO.
+5. [Airflow orchestration](./exercises/03-airflow-orchestration/): điều phối
+   tuần tự Bronze → Silver → Gold. DAG hiện tại chỉ mô phỏng task bằng log,
+   chưa chạy Spark hay xử lý dữ liệu thật.
+
+## MinIO, Iceberg và Nessie
+
+`docker-compose.yml` ở root cung cấp MinIO và Nessie dùng chung. MinIO đóng
+vai trò object storage S3-compatible. Bài lakehouse dùng MinIO để lưu output;
+Iceberg/Nessie là hướng mở rộng để quản lý table và metadata. Bài Airflow tập
+trung vào orchestration, không thay thế Spark trong việc xử lý dữ liệu.
+
+Khởi động các service:
+
+```powershell
+docker compose up -d
+```
+
+MinIO API chạy tại `http://localhost:9000`, console tại
+`http://localhost:9001`.
 
 ## Yêu cầu môi trường
 
 - Python (khuyến nghị dùng qua **conda/venv riêng**, không dùng Python hệ thống)
 - Java 8/11/17 (Spark cần JDK, không chạy được nếu chỉ có JRE hoặc thiếu `JAVA_HOME`)
-- PySpark (cài trong `dev-requirements.txt`)
+- PySpark (cài theo README của từng bài)
 
 Cài đặt nhanh:
 
 ```bash
 conda create -n pyspark_env python=3.10 -y
 conda activate pyspark_env
-pip install -r dev-requirements.txt
+pip install pyspark==4.0.1 boto3 pytest
 ```
 
-## Cách chạy
+## Chạy bài orders aggregation
 
-```bash
-python spark_orders_exercise.py
+```powershell
+cd .\exercises\01-orders-aggregation
+python .\spark_orders_exercise.py
 ```
 
 Script sẽ:
@@ -54,6 +93,38 @@ Script sẽ:
 4. Group by `province`, tính `count` order và `sum amount`
 5. Tạo temp view, chạy SQL tương đương
 6. Ghi kết quả ra `output/orders_by_province` (CSV)
+
+Chi tiết xem [README của bài aggregation](./exercises/01-orders-aggregation/README.md).
+
+## Chạy bài lakehouse
+
+```powershell
+cd .\exercises\02-orders-lakehouse
+python -m pip install pyspark boto3
+python .\spark_orders_lakehouse.py
+```
+
+Chi tiết flow Bronze/Silver/Gold xem [README của bài lakehouse](./exercises/02-orders-lakehouse/README.md).
+
+## Chạy bài Airflow
+
+DAG nằm tại:
+
+```text
+exercises/03-airflow-orchestration/dags/orders_lakehouse_dag.py
+```
+
+DAG có ba task tuần tự:
+
+```text
+bronze_task → silver_task → gold_task
+```
+
+Mỗi task chỉ in log để minh họa orchestration. Cài Airflow bằng Docker Compose
+hoặc chạy trong WSL/Linux, mount thư mục `dags/` vào Airflow scheduler rồi
+trigger DAG `orders_lakehouse_pipeline` thủ công trên UI.
+
+Chi tiết xem [README của bài Airflow](./exercises/03-airflow-orchestration/README.md).
 
 ---
 
@@ -88,4 +159,3 @@ __pycache__/
 output/
 .venv/
 ```
-

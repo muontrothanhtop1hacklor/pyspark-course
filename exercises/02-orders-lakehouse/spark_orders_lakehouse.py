@@ -196,14 +196,48 @@ def main() -> None:
     input_path = project_dir / "orders.csv"
     output_dir = project_dir / "output" / "lakehouse"
     endpoint = os.getenv("MINIO_ENDPOINT", "http://localhost:9000")
+    nessie_uri = os.getenv("NESSIE_URI", "http://localhost:19120/api/v2")
     access_key = os.getenv("MINIO_ACCESS_KEY", "admin")
     secret_key = os.getenv("MINIO_SECRET_KEY", "password123")
     bucket = "lakehouse-demo"
+    iceberg_warehouse = os.getenv("ICEBERG_WAREHOUSE", "s3://warehouse")
     load_time = datetime.now(timezone.utc).isoformat()
 
     spark = (
-        SparkSession.builder.appName("OrdersLakehouseExercise")
+        SparkSession.builder
+        .appName("OrdersLakehouseExercise")
         .master("local[*]")
+        .config(
+            "spark.jars.packages",
+            ",".join(
+                [
+                    "org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.11.0",
+                    "org.apache.iceberg:iceberg-nessie:1.11.0",
+                    "org.apache.iceberg:iceberg-aws-bundle:1.11.0",
+                ]
+            ),
+        )
+        .config("spark.jars.repositories", "https://repo.maven.apache.org/maven2")
+        .config(
+            "spark.sql.extensions",
+            "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+        )
+        .config("spark.sql.catalog.nessie", "org.apache.iceberg.spark.SparkCatalog")
+        .config(
+            "spark.sql.catalog.nessie.catalog-impl",
+            "org.apache.iceberg.nessie.NessieCatalog",
+        )
+        .config("spark.sql.catalog.nessie.uri", nessie_uri)
+        .config("spark.sql.catalog.nessie.ref", "main")
+        .config("spark.sql.catalog.nessie.warehouse", iceberg_warehouse)
+        .config(
+            "spark.sql.catalog.nessie.io-impl",
+            "org.apache.iceberg.aws.s3.S3FileIO",
+        )
+        .config("spark.sql.catalog.nessie.s3.endpoint", endpoint)
+        .config("spark.sql.catalog.nessie.s3.path-style-access", "true")
+        .config("spark.sql.catalog.nessie.s3.access-key-id", access_key)
+        .config("spark.sql.catalog.nessie.s3.secret-access-key", secret_key)
         .getOrCreate()
     )
     spark.sparkContext.setLogLevel("WARN")
@@ -235,6 +269,18 @@ def main() -> None:
         upload_directory_to_minio(
             bronze_path, bucket, "bronze/orders", endpoint, access_key, secret_key
         )
+        try:
+            (
+                bronze.writeTo("nessie.db.orders_bronze")
+                .using("iceberg")
+                .createOrReplace()
+            )
+            print("Iceberg Bronze table written: nessie.db.orders_bronze")
+        except Exception as iceberg_error:
+            print(
+                "WARNING: Iceberg Bronze write failed; "
+                f"CSV/MinIO output remains available: {iceberg_error}"
+            )
         upload_directory_to_minio(
             silver_path, bucket, "silver/orders", endpoint, access_key, secret_key
         )
