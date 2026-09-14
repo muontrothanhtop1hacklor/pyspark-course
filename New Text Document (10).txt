@@ -1,0 +1,31 @@
+Data Lake vs Data Warehouse: Lake ưu tiên lưu trữ dữ liệu thô, đa dạng và linh hoạt (JSON, ảnh, video...), còn Warehouse ưu tiên dữ liệu đã xử lý, có cấu trúc để phân tích và BI.
+Lakehouse: Là kiến trúc kết hợp sự linh hoạt của Lake với khả năng quản lý, truy vấn và phân tích như Warehouse, cho phép vừa giữ dữ liệu thô vừa quản lý dữ liệu dạng bảng trên cùng nền tảng.
+----------------
+Ingest (Thu thập):
+Khái niệm & Mục đích: Hút dữ liệu từ các nguồn bên ngoài vào hệ thống. Nằm ở entry point của Lakehouse
+----------------
+Bronze / Silver / Gold(tiêu chuẩn phân loại dữ liệu):
+Bronze: Dữ liệu thô vừa ingest vào, giữ nguyên trạng.
+Silver: Dữ liệu đã được làm sạch, chuẩn hóa, lọc bỏ lỗi .
+Gold: Dữ liệu đã được tổng hợp, tính toán sẵn các metric kinh doand, sẵn sàng cho các sếp xem báo cáo hoặc chạy ML.
+-----------------
+elt/etl: quá trình xử lý dữ liệu, elt tải rồi mới xử lý dữ liệu trong khi etl xử lý rồi mới lưu
+-----------------
+Data catalog:
+Khái niệm: là bản đồ và thông tin mô tả dữ liệu đang ở đâu và dùng nó thế nào
+-----------------
+MinIO:
+Khái niệm: Là hệ thống lưu trữ Object Storage. Dùng để chứa các file vật lý (Parquet, CSV, JSON) với chi phí siêu rẻ. Là lưu trữ vật lý của 3 lớp Bronze, Silver, Gold, nằm ở tầng storage
+------------------
+Khái niệm & Mục đích: MinIO chỉ là file tĩnh. Table Format là một cơ chế ghi chép thông minh giúp "đánh lừa" hệ thống tin rằng đống file đó là một cái "Bảng" SQL thực thụ. Nhờ nó, có thể chạy lệnh UPDATE, DELETE trên Data Lake.
+------------------
+Nessie:
+Khái niệm: Là một Data Catalog kiểu mới, hoạt động như "Git dành cho Data". Nó cho phép tạo nhánh (branch) dữ liệu, commit, hoặc rollback lại dữ liệu cũ nếu quá trình ETL bị lỗi, mà không cần copy lại file vật lý.
+-------------------
+Spark (Apache Spark):
+Khái niệm: Là "Động cơ" tính toán phân tán (Compute Engine). Spark cực kỳ mạnh trong việc xử lý khối lượng dữ liệu khổng lồ.
++Compute engine phân tán, tách biệt với storage (MinIO).
++Đọc dữ liệu Bronze từ MinIO, thông qua catalog Nessie + table format Iceberg.
++Thực hiện transform — đây là phần "T" trong ELT.
++Biến Bronze → Silver → Gold, xử lý song song nên scale được lượng dữ liệu lớn.
++Ghi kết quả lại thành snapshot mới   
