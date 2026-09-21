@@ -7,6 +7,7 @@ DataFrame API, Spark SQL, Lakehouse Bronze/Silver/Gold, MinIO và Airflow.
 
 - Đọc và ghi CSV/JSON bằng Spark, hiểu output dạng thư mục part-file.
 - Làm sạch dữ liệu bằng DataFrame API.
+- Hiểu kiểu dữ liệu PySpark, khai báo schema thủ công và kiểm soát kết quả cast.
 - Lọc, group và aggregation bằng DataFrame API và Spark SQL.
 - Xây dựng pipeline Bronze/Silver/Gold.
 - Upload output lên MinIO bằng `boto3`.
@@ -23,6 +24,7 @@ pyspark-course/
 ├── exercises/
 │   ├── 00-read-write-basics/
 │   ├── 00b-data-cleaning-practice/
+│   ├── 00c-data-types/
 │   ├── 01-orders-aggregation/
 │   ├── 02-orders-lakehouse/
 │   └── 03-airflow-orchestration/
@@ -132,6 +134,7 @@ Nếu không kết nối được MinIO, kiểm tra `docker compose up -d` và c
 ## Tài liệu tham khảo
 
 - [Spark 4.0.1 User Guide](https://spark.apache.org/docs/4.0.1/)
+- [Data Types README](./exercises/00c-data-types/README.md)
 - [Orders Lakehouse README](./exercises/02-orders-lakehouse/README.md)
 - [Airflow orchestration README](./exercises/03-airflow-orchestration/README.md)
 
@@ -164,3 +167,17 @@ Mở rộng pipeline cho ba nguồn Web, Mobile và Store. Bổ sung Airflow DAG
 
 Đồng thời hoàn thiện tài liệu về Spark, MinIO, Iceberg, Nessie và Data
 Catalog trong kiến trúc Data Lakehouse.
+
+### 21/09 - Kiểu dữ liệu và kiểm soát schema (đang thực hiện)
+
+Đang làm bài `00c-data-types`: tìm hiểu kiểu dữ liệu cơ bản, `Double`/`Float`/
+`Decimal`, kiểu phức tạp (`Array`, `Struct`) và cast cột trong PySpark.
+
+- Tạo dataset thô `raw_orders_types.csv` (khớp với dữ liệu orders ở bài 01) có
+  `String`, `Integer`, `Decimal`, `Date`, `Timestamp`, `Array`, `Struct`.
+- Khai báo schema thủ công thay vì `inferSchema`.
+- Cast `amount`/`quantity`/`order_date`/`created_at` từ `String` sang đúng kiểu,
+  cố tình thêm dòng dữ liệu sai để quan sát kết quả cast (`NULL`, sai nghiệp vụ,
+  ANSI mode).
+
+Mục tiêu: hiểu datatype và vì sao ETL cần kiểm soát schema.
