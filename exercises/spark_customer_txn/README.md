@@ -22,7 +22,7 @@ spark_customer_txn/
     └── execution_plans.txt     # explain() của các bước quan trọng
 ```
 
-## 2. Quy trình đã chạy thực tế (log thật, không phải mô phỏng)
+## 2. Quy trình đã chạy thực tế 
 
 | Bước | Việc làm | Kết quả thực tế |
 |---|---|---|
@@ -37,7 +37,7 @@ spark_customer_txn/
 | 9. Write error | Ghi Parquet riêng, không partition | invalid=15, unmapped=8 |
 | 10. Round-trip check | Đọc lại từng output, so `count()` với DataFrame gốc | **TẤT CẢ KHỚP** |
 
-**Reconciliation toàn cục** (đối chiếu số dòng, chạy thật):
+**Reconciliation toàn cục**:
 ```
 transactions_raw (đọc từ CSV)          : 256
   - invalid (missing_cid / amount<=0)  : 15
