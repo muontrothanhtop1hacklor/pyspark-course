@@ -1,0 +1,45 @@
+{'label': 'ORIGINAL (sau khi đọc CSV)', 'num_partitions_before_write': 3, 'num_files_direct_write_no_groupby': None, 'num_output_files_after_groupby': None, 'elapsed_sec': None, 'out_path': None, 'sample_files': []}
+{'label': 'repartition(2)', 'num_partitions_before_write': 2, 'num_files_direct_write_no_groupby': 2, 'num_output_files_after_groupby': 6, 'elapsed_sec': 2.42, 'out_path': 'c:\\Users\\Administrator\\spark introduce learn\\exercises\\files_tuan_3_t4\\output\\case_repartition_2', 'sample_files': ['part-00000-8d96b097-c4ff-4a33-825e-470c2a422b37-c000.snappy.parquet', 'part-00001-8d96b097-c4ff-4a33-825e-470c2a422b37-c000.snappy.parquet', 'part-00002-8d96b097-c4ff-4a33-825e-470c2a422b37-c000.snappy.parquet', 'part-00004-8d96b097-c4ff-4a33-825e-470c2a422b37-c000.snappy.parquet', 'part-00005-8d96b097-c4ff-4a33-825e-470c2a422b37-c000.snappy.parquet', 'part-00007-8d96b097-c4ff-4a33-825e-470c2a422b37-c000.snappy.parquet']}
+{'label': 'repartition(4)', 'num_partitions_before_write': 4, 'num_files_direct_write_no_groupby': 4, 'num_output_files_after_groupby': 6, 'elapsed_sec': 1.33, 'out_path': 'c:\\Users\\Administrator\\spark introduce learn\\exercises\\files_tuan_3_t4\\output\\case_repartition_4', 'sample_files': ['part-00000-aede82f0-6073-45df-9dc0-f8b9fa74cd6c-c000.snappy.parquet', 'part-00001-aede82f0-6073-45df-9dc0-f8b9fa74cd6c-c000.snappy.parquet', 'part-00002-aede82f0-6073-45df-9dc0-f8b9fa74cd6c-c000.snappy.parquet', 'part-00004-aede82f0-6073-45df-9dc0-f8b9fa74cd6c-c000.snappy.parquet', 'part-00005-aede82f0-6073-45df-9dc0-f8b9fa74cd6c-c000.snappy.parquet', 'part-00007-aede82f0-6073-45df-9dc0-f8b9fa74cd6c-c000.snappy.parquet']}
+{'label': 'repartition(8)', 'num_partitions_before_write': 8, 'num_files_direct_write_no_groupby': 8, 'num_output_files_after_groupby': 6, 'elapsed_sec': 1.1, 'out_path': 'c:\\Users\\Administrator\\spark introduce learn\\exercises\\files_tuan_3_t4\\output\\case_repartition_8', 'sample_files': ['part-00000-5488524a-d8a1-4fbd-8914-144cab833092-c000.snappy.parquet', 'part-00001-5488524a-d8a1-4fbd-8914-144cab833092-c000.snappy.parquet', 'part-00002-5488524a-d8a1-4fbd-8914-144cab833092-c000.snappy.parquet', 'part-00004-5488524a-d8a1-4fbd-8914-144cab833092-c000.snappy.parquet', 'part-00005-5488524a-d8a1-4fbd-8914-144cab833092-c000.snappy.parquet', 'part-00007-5488524a-d8a1-4fbd-8914-144cab833092-c000.snappy.parquet']}
+{'label': 'repartition("province")', 'num_partitions_before_write': 8, 'num_files_direct_write_no_groupby': 6, 'num_output_files_after_groupby': 6, 'elapsed_sec': 1.25, 'out_path': 'c:\\Users\\Administrator\\spark introduce learn\\exercises\\files_tuan_3_t4\\output\\case_repartition_province', 'sample_files': ['part-00000-cfd66c09-5dde-4a98-82ee-25f53cb4a56a-c000.snappy.parquet', 'part-00001-cfd66c09-5dde-4a98-82ee-25f53cb4a56a-c000.snappy.parquet', 'part-00002-cfd66c09-5dde-4a98-82ee-25f53cb4a56a-c000.snappy.parquet', 'part-00004-cfd66c09-5dde-4a98-82ee-25f53cb4a56a-c000.snappy.parquet', 'part-00005-cfd66c09-5dde-4a98-82ee-25f53cb4a56a-c000.snappy.parquet', 'part-00007-cfd66c09-5dde-4a98-82ee-25f53cb4a56a-c000.snappy.parquet']}
+{'label': 'coalesce(2)', 'num_partitions_before_write': 2, 'num_files_direct_write_no_groupby': 2, 'num_output_files_after_groupby': 6, 'elapsed_sec': 0.89, 'out_path': 'c:\\Users\\Administrator\\spark introduce learn\\exercises\\files_tuan_3_t4\\output\\case_coalesce_2', 'sample_files': ['part-00000-7688bd18-87c2-4536-9cb5-1e31517883a1-c000.snappy.parquet', 'part-00001-7688bd18-87c2-4536-9cb5-1e31517883a1-c000.snappy.parquet', 'part-00002-7688bd18-87c2-4536-9cb5-1e31517883a1-c000.snappy.parquet', 'part-00004-7688bd18-87c2-4536-9cb5-1e31517883a1-c000.snappy.parquet', 'part-00005-7688bd18-87c2-4536-9cb5-1e31517883a1-c000.snappy.parquet', 'part-00007-7688bd18-87c2-4536-9cb5-1e31517883a1-c000.snappy.parquet']}
+{'label': 'repartition(200) [OVER-PARTITION]', 'num_partitions_before_write': 200, 'num_files_direct_write_no_groupby': 200, 'num_output_files_after_groupby': 6, 'elapsed_sec': 4.63, 'out_path': 'c:\\Users\\Administrator\\spark introduce learn\\exercises\\files_tuan_3_t4\\output\\case_repartition_200', 'sample_files': ['part-00000-d588f66c-c751-446c-b30c-261a45c6f3e2-c000.snappy.parquet', 'part-00001-d588f66c-c751-446c-b30c-261a45c6f3e2-c000.snappy.parquet', 'part-00002-d588f66c-c751-446c-b30c-261a45c6f3e2-c000.snappy.parquet', 'part-00004-d588f66c-c751-446c-b30c-261a45c6f3e2-c000.snappy.parquet', 'part-00005-d588f66c-c751-446c-b30c-261a45c6f3e2-c000.snappy.parquet', 'part-00007-d588f66c-c751-446c-b30c-261a45c6f3e2-c000.snappy.parquet']}
+
+no_partitionBy_files=6
+with_partitionBy_files=10
+tree_no_pb=
+case_no_partitionBy/
+  _SUCCESS
+  part-00000-34b723e8-5760-406e-b598-33a3b5b5e3bd-c000.snappy.parquet
+  part-00001-34b723e8-5760-406e-b598-33a3b5b5e3bd-c000.snappy.parquet
+  part-00002-34b723e8-5760-406e-b598-33a3b5b5e3bd-c000.snappy.parquet
+  part-00004-34b723e8-5760-406e-b598-33a3b5b5e3bd-c000.snappy.parquet
+  part-00005-34b723e8-5760-406e-b598-33a3b5b5e3bd-c000.snappy.parquet
+  part-00007-34b723e8-5760-406e-b598-33a3b5b5e3bd-c000.snappy.parquet
+tree_with_pb=
+case_with_partitionBy/
+  _SUCCESS
+  province=BinhDuong/
+    part-00007-35d4da63-5ff4-457f-814e-d2bd4c788ca0.c000.snappy.parquet
+  province=CanTho/
+    part-00002-35d4da63-5ff4-457f-814e-d2bd4c788ca0.c000.snappy.parquet
+  province=DaNang/
+    part-00001-35d4da63-5ff4-457f-814e-d2bd4c788ca0.c000.snappy.parquet
+  province=DongNai/
+    part-00000-35d4da63-5ff4-457f-814e-d2bd4c788ca0.c000.snappy.parquet
+  province=HaiPhong/
+    part-00004-35d4da63-5ff4-457f-814e-d2bd4c788ca0.c000.snappy.parquet
+  province=HaNoi/
+    part-00004-35d4da63-5ff4-457f-814e-d2bd4c788ca0.c000.snappy.parquet
+  province=HoChiMinh/
+    part-00002-35d4da63-5ff4-457f-814e-d2bd4c788ca0.c000.snappy.parquet
+  province=KhanhHoa/
+    part-00004-35d4da63-5ff4-457f-814e-d2bd4c788ca0.c000.snappy.parquet
+  province=NgheAn/
+    part-00005-35d4da63-5ff4-457f-814e-d2bd4c788ca0.c000.snappy.parquet
+  province=ThanhHoa/
+    part-00001-35d4da63-5ff4-457f-814e-d2bd4c788ca0.c000.snappy.parquet
+over_partition_num_files=200
+over_partition_avg_size_kb=18.28
+over_partition_total_size_kb=3656.45
