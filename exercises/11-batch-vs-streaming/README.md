@@ -35,7 +35,7 @@ exercises/11-batch-vs-streaming/
 python exercises/11-batch-vs-streaming/generate_streaming_data.py
 ```
 
-### Bước 1: Batch Processing (Yêu cầu 1)
+### Bước 1: Batch Processing 
 
 ```bash
 python exercises/11-batch-vs-streaming/req1_batch.py
@@ -43,7 +43,7 @@ python exercises/11-batch-vs-streaming/req1_batch.py
 
 Script khai báo schema tĩnh và đọc cả thư mục `batch_input/`. Sau đó chuẩn hóa `status`, ép kiểu `amount`, parse `order_date`, lọc ra 21 dòng hợp lệ và tính tổng theo province.
 
-### Bước 2: Structured Streaming (Yêu cầu 2)
+### Bước 2: Structured Streaming 
 
 ```bash
 python exercises/11-batch-vs-streaming/req2_streaming_console.py
@@ -51,7 +51,7 @@ python exercises/11-batch-vs-streaming/req2_streaming_console.py
 
 Script đọc `stream_input/` với `maxFilesPerTrigger=1`, `trigger("5 seconds")`, `outputMode("complete")`. Các file `orders_1.csv`, `orders_2.csv`, `orders_3.csv` được nạp lần lượt, và console in kết quả lũy kế qua micro-batch 0, 1, 2.
 
-### Bước 3: Năm thử nghiệm (Yêu cầu 4)
+### Bước 3: Năm thử nghiệm 
 
 ```bash
 python exercises/11-batch-vs-streaming/req4_experiments.py
@@ -63,7 +63,7 @@ python exercises/11-batch-vs-streaming/req4_experiments.py
 4. Dùng append mode cho aggregate không có watermark: `AnalysisException`.
 5. Dedup bằng window `row_number()` trên stream: `AnalysisException`.
 
-### Bước 4: Ghi Parquet và đối chiếu (Yêu cầu 5)
+### Bước 4: Ghi Parquet và đối chiếu 
 
 ```bash
 python exercises/11-batch-vs-streaming/req5_write_and_check.py
