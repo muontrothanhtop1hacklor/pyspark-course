@@ -1,5 +1,37 @@
-**/__pycache__/
-**/output/
-**/.conda/
+# Python
+__pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+**/.conda/
+
+# Testing & caches
+.pytest_cache/
 **/.pytest_cache/
+.coverage
+htmlcov/
+
+# Spark & Job outputs
+**/output/
+**/output_1m/
+*.crc
+metastore_db/
+derby.log
+warehouse/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

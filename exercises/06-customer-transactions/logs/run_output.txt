@@ -1,0 +1,74 @@
+26/09/22 03:14:22 WARN Utils: Your hostname, vm resolves to a loopback address: 127.0.0.1; using 192.0.2.2 instead (on interface eth0)
+26/09/22 03:14:22 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+26/09/22 03:14:23 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+[Stage 0:>                                                          (0 + 1) / 1]                                                                                [1] Đọc xong: customers_raw=20 rows, transactions_raw=256 rows
+[2] Validate: invalid=15 rows, valid_raw (trước dedup)=241 rows
+[3] Dedup theo transaction_id (giữ updated_at mới nhất): 241 -> 208 rows (loại 33 bản ghi cũ hơn)
+[4] Join: mapped=200 rows, unmapped=8 rows
+[6] customer_summary (10 dòng đầu):
++-----------+-------------+--------+------------------+--------------------+--------------------+---------------------+-----------------------+-------------+-------------+
+|customer_id|customer_name|province|total_transactions|total_amount        |success_transactions|latest_transaction_id|latest_transaction_time|latest_amount|latest_status|
++-----------+-------------+--------+------------------+--------------------+--------------------+---------------------+-----------------------+-------------+-------------+
+|C0016      |Customer_16  |DaNang  |16                |4.523373187000001E7 |11                  |T00213               |2024-04-29 23:00:00    |1592033.32   |SUCCESS      |
+|C0015      |Customer_15  |HaiPhong|18                |3.989876934E7       |15                  |T00097               |2024-04-25 20:00:00    |86584.51     |FAILED       |
+|C0005      |Customer_5   |CanTho  |12                |3.894839258E7       |10                  |T00057               |2024-04-28 12:00:00    |4903802.67   |SUCCESS      |
+|C0006      |Customer_6   |HaNoi   |12                |3.729255765E7       |8                   |T00075               |2024-04-25 15:00:00    |4827833.24   |SUCCESS      |
+|C0013      |Customer_13  |CanTho  |10                |3.2825856330000002E7|5                   |T00214               |2024-04-21 04:00:00    |4093703.53   |SUCCESS      |
+|C0003      |Customer_3   |HCM     |12                |3.1081838590000004E7|7                   |T00153               |2024-04-20 10:00:00    |1554813.62   |SUCCESS      |
+|C0020      |Customer_20  |DaNang  |10                |3.0138345880000003E7|6                   |T00199               |2024-04-27 05:00:00    |2096492.37   |PENDING      |
+|C0009      |Customer_9   |CanTho  |11                |2.6714287879999995E7|5                   |T00111               |2024-04-30 11:00:00    |2926954.86   |FAILED       |
+|C0008      |Customer_8   |HCM     |11                |2.579535003E7       |10                  |T00095               |2024-04-19 13:00:00    |2863270.23   |SUCCESS      |
+|C0011      |Customer_11  |CanTho  |10                |2.5602151339999996E7|9                   |T00152               |2024-04-28 11:00:00    |416694.92    |SUCCESS      |
++-----------+-------------+--------+------------------+--------------------+--------------------+---------------------+-----------------------+-------------+-------------+
+only showing top 10 rows
+
+[7] Top 3 customer theo tổng amount / province:
++--------+----------------+-----------+-------------+--------------------+
+|province|rank_in_province|customer_id|customer_name|total_amount        |
++--------+----------------+-----------+-------------+--------------------+
+|CanTho  |1               |C0005      |Customer_5   |3.894839258E7       |
+|CanTho  |2               |C0013      |Customer_13  |3.2825856330000002E7|
+|CanTho  |3               |C0009      |Customer_9   |2.6714287879999995E7|
+|DaNang  |1               |C0016      |Customer_16  |4.523373187000001E7 |
+|DaNang  |2               |C0020      |Customer_20  |3.0138345880000003E7|
+|HCM     |1               |C0003      |Customer_3   |3.1081838590000004E7|
+|HCM     |2               |C0008      |Customer_8   |2.579535003E7       |
+|HCM     |3               |C0017      |Customer_17  |2.4498738509999998E7|
+|HaNoi   |1               |C0006      |Customer_6   |3.729255765E7       |
+|HaNoi   |2               |C0018      |Customer_18  |2.454904071E7       |
+|HaNoi   |3               |C0014      |Customer_14  |2.2066462959999997E7|
+|HaiPhong|1               |C0015      |Customer_15  |3.989876934E7       |
+|HaiPhong|2               |C0019      |Customer_19  |1.9558031389999997E7|
++--------+----------------+-----------+-------------+--------------------+
+
+[Stage 70:>                                                         (0 + 1) / 1]                                                                                [8] Đã ghi valid transactions -> /home/claude/spark_customer_txn/output/valid_transactions_parquet (partitionBy province)
+[8] Đã ghi customer_summary -> /home/claude/spark_customer_txn/output/customer_summary_parquet (partitionBy province)
+[8] Đã ghi top3_by_province -> /home/claude/spark_customer_txn/output/top3_by_province_parquet (partitionBy province)
+[9] Đã ghi invalid transactions -> /home/claude/spark_customer_txn/output/invalid_transactions_parquet
+[9] Đã ghi unmapped transactions -> /home/claude/spark_customer_txn/output/unmapped_transactions_parquet
+
+============================================================
+[10] KIỂM TRA LẠI OUTPUT SAU KHI GHI (round-trip check)
+============================================================
+  - valid_transactions_parquet       expected= 200  actual_after_reread= 200  OK
+  - customer_summary_parquet         expected=  20  actual_after_reread=  20  OK
+  - top3_by_province_parquet         expected=  13  actual_after_reread=  13  OK
+  - invalid_transactions_parquet     expected=  15  actual_after_reread=  15  OK
+  - unmapped_transactions_parquet    expected=   8  actual_after_reread=   8  OK
+
+[10] Tổng kết round-trip check: TẤT CẢ KHỚP
+
+============================================================
+[RECON] Đối chiếu số dòng toàn pipeline
+============================================================
+  transactions_raw (đọc từ CSV)         : 256
+  - invalid (missing_cid / amount<=0)   : 15
+  - loại bỏ do trùng transaction_id (cũ): 33
+  = còn lại sau validate+dedup           : 208
+      -> mapped (join thành công)        : 200
+      -> unmapped (customer_id lạ)       : 8
+  Reconciliation OK? True
+
+Execution plan đã ghi vào: /home/claude/spark_customer_txn/logs/execution_plans.txt

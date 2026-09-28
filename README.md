@@ -1,19 +1,24 @@
 # PySpark Course - From Spark Basics to Lakehouse Orchestration
 
-Khóa học thực hành PySpark trên Windows, đi từ đọc/ghi dữ liệu cơ bản đến
-DataFrame API, Spark SQL, Lakehouse Bronze/Silver/Gold, MinIO và Airflow.
+Khóa học và lộ trình thực hành PySpark toàn diện trên Windows: đi từ đọc/ghi dữ liệu cơ bản, Data Types & Schema Control, Joins, Window Functions, Partitioning, UDFs đến Full ETL Pipeline, Data Lakehouse (Bronze/Silver/Gold/MinIO/Iceberg) và Workflow Orchestration với Airflow.
 
-## Mục tiêu
+---
 
-- Đọc và ghi CSV/JSON bằng Spark, hiểu output dạng thư mục part-file.
-- Làm sạch dữ liệu bằng DataFrame API.
-- Hiểu kiểu dữ liệu PySpark, khai báo schema thủ công và kiểm soát kết quả cast.
-- Lọc, group và aggregation bằng DataFrame API và Spark SQL.
-- Xây dựng pipeline Bronze/Silver/Gold.
-- Upload output lên MinIO bằng `boto3`.
-- Dùng Airflow điều phối nhiều job Spark theo dependency.
+## 1. Mục tiêu khóa học
 
-## Cấu trúc
+- **Cơ bản:** Khởi tạo SparkSession, đọc/ghi CSV, JSON, Parquet, hiểu output dạng thư mục part-file và commit flag `_SUCCESS`.
+- **Làm sạch & Kiểm soát kiểu dữ liệu:** Khai báo schema thủ công (`StructType`), cast dữ liệu, kiểm soát lỗi khi cast (ANSI mode), xử lý dữ liệu khuyết (`na.drop`, `na.fill`).
+- **Phép toán cốt lõi:** Filter, groupBy, aggregation bằng DataFrame API và Spark SQL.
+- **Quan hệ & Join:** Inner join, left join, tách và kiểm soát dữ liệu không mapping được (unmapped/orphan records).
+- **Window Functions & Dedup:** Khử trùng lặp theo mốc thời gian mới nhất (`row_number() == 1`), xếp hạng (`rank()`, `dense_rank()`), audit reconciliation.
+- **Tối ưu & Phân vùng:** Hiểu sâu `repartition` (shuffle) vs `coalesce` (no shuffle) vs `partitionBy` (ổ đĩa), xử lý data skew, điều chỉnh `shuffle.partitions`.
+- **Hàm tự định nghĩa (UDF):** So sánh hiệu năng thực tế trên 1 triệu dòng giữa Built-in Functions, Python UDF, Vectorized Pandas UDF (`@pandas_udf`) và UDTF (`@udtf` với `LATERAL`).
+- **Quy trình ETL hoàn chỉnh:** Xây dựng pipeline đọc thô → kiểm tra schema → phân loại lỗi (quarantine) → dedup → join → transform → aggregate → partitioned write → round-trip validation.
+- **Data Lakehouse & Điều phối:** Xây dựng kiến trúc 3 lớp Bronze → Silver → Gold, upload MinIO bằng `boto3`, tích hợp Nessie/Iceberg và điều phối DAGs đa nguồn bằng Apache Airflow.
+
+---
+
+## 2. Cấu trúc thư mục bài tập (`exercises/`)
 
 ```text
 pyspark-course/
@@ -22,39 +27,75 @@ pyspark-course/
 │   └── airflow/
 │       └── Dockerfile
 ├── exercises/
-│   ├── 00-read-write-basics/
-│   ├── 00b-data-cleaning-practice/
-│   ├── 00c-data-types/
-│   ├── 01-orders-aggregation/
-│   ├── 02-orders-lakehouse/
-│   └── 03-airflow-orchestration/
+│   ├── 00-read-write-basics/             ← Đọc/ghi CSV & JSON, tìm hiểu part-files
+│   ├── 00b-data-cleaning-practice/       ← Làm sạch cơ bản: na.drop, lọc khoảng giá trị
+│   ├── 01-orders-aggregation/            ← DataFrame API & Spark SQL aggregation
+│   ├── 02-orders-lakehouse/              ← Lakehouse Bronze/Silver/Gold + MinIO + Iceberg
+│   ├── 03-airflow-orchestration/         ← Điều phối Airflow DAG đa nguồn dữ liệu
+│   ├── 04-data-types/                    ← Kiểu dữ liệu, StructType thủ công, cast & ANSI
+│   ├── 05-joins/                         ← Inner join, left join & tách unmapped records
+│   ├── 06-customer-transactions/         ← Window functions, dedup mới nhất, top-N, SCD
+│   ├── 07-partitioning-performance/      ← repartition vs coalesce vs partitionBy & skew
+│   ├── 08-read-write-advance/            ← Schema tự khai báo, quarantine lỗi, write modes
+│   ├── 09-full-etl-pipeline/             ← Flow PySpark hoàn chỉnh 10 bước khép kín
+│   └── 10-udf-pandas-udtf/               ← Benchmark 1M dòng: UDF vs Pandas UDF vs Built-in
+├── logs/                                 ← Mẫu nhật ký học tập theo từng buổi
 └── README.md
 ```
 
-## Môi trường host
+---
 
-Khuyến nghị dùng Python 3.11 qua Conda:
+## 3. Bản đồ lộ trình học tập (Learning Roadmap)
+
+| STT | Thư mục | Chủ đề trọng tâm | Dữ liệu chính |
+|:---:|---|---|---|
+| **00** | [`00-read-write-basics`](./exercises/00-read-write-basics/README.md) | SparkSession, đọc/ghi CSV, JSON, Parquet, part-files | `employee.csv`, `employees.json` |
+| **00b** | [`00b-data-cleaning-practice`](./exercises/00b-data-cleaning-practice/README.md) | Xử lý NULL/NaN, `na.drop`, `between` filter | In-memory DataFrame |
+| **01** | [`01-orders-aggregation`](./exercises/01-orders-aggregation/README.md) | DataFrame API vs Spark SQL, groupBy, agg, orderBy | `orders.csv` |
+| **02** | [`02-orders-lakehouse`](./exercises/02-orders-lakehouse/README.md) | Kiến trúc Bronze/Silver/Gold, MinIO S3, Iceberg | `orders_{web,mobile,store}.csv` |
+| **03** | [`03-airflow-orchestration`](./exercises/03-airflow-orchestration/README.md) | Điều phối DAG Airflow, TaskGroups, Docker Airflow | Airflow DAGs |
+| **04** | [`04-data-types`](./exercises/04-data-types/README.md) | Schema thủ công, String/Int/Decimal/Date/Timestamp, cast | `raw_orders_types.csv` |
+| **05** | [`05-joins`](./exercises/05-joins/README.md) | Inner vs Left join, bắt bản ghi unmapped/mồ côi | `orders.csv` x `customers.csv` |
+| **06** | [`06-customer-transactions`](./exercises/06-customer-transactions/README.md) | Window `row_number()` dedup, `rank()` top-3, audit reconciliation | `customers.csv` x `transactions.csv` |
+| **07** | [`07-partitioning-performance`](./exercises/07-partitioning-performance/README.md) | `repartition` vs `coalesce` vs `partitionBy`, data skew | `orders.csv` (200k dòng) |
+| **08** | [`08-read-write-advance`](./exercises/08-read-write-advance/README.md) | Phân loại lỗi `error_reason`, overwrite/append/partitionBy | `orders_dirty.csv` (2k dòng) |
+| **09** | [`09-full-etl-pipeline`](./exercises/09-full-etl-pipeline/README.md) | Full Flow: read → clean → validate → dedup → join → aggregate → write | `orders_dup.csv` (3.15k dòng) |
+| **10** | [`10-udf-pandas-udtf`](./exercises/10-udf-pandas-udtf/README.md) | So sánh hiệu năng UDF vs Built-in vs Pandas UDF vs UDTF | `customers_1m.csv` (1M dòng) |
+
+---
+
+## 4. Môi trường chạy trên Windows
+
+Khuyến nghị sử dụng Python 3.11 qua Conda:
 
 ```powershell
 conda create -n pyspark_env python=3.11 -y
 conda activate pyspark_env
-pip install pyspark==4.0.1 boto3 pytest
+pip install pyspark==4.0.1 boto3 pytest pandas pyarrow
 ```
 
-Java/JDK 17 hoặc 21 là cần thiết cho Spark 4.0.1.
+> **Yêu cầu bắt buộc:** Đã cài Java/JDK 17 hoặc 21 (đặt biến môi trường `JAVA_HOME`).
+> Nếu Spark trên Windows cần Hadoop native helper:
+> ```powershell
+> $env:HADOOP_HOME = "C:\hadoop"
+> $env:Path = "$env:HADOOP_HOME\bin;$env:Path"
+> ```
 
-## Chạy Orders Lakehouse
+---
 
-Khởi động MinIO và Nessie:
+## 5. Chạy Orders Lakehouse & Airflow (Docker Compose)
+
+Khởi động hệ thống MinIO, Nessie và Airflow:
 
 ```powershell
 docker compose up -d
 ```
 
-MinIO API chạy tại `http://localhost:9000`, console tại
-`http://localhost:9001`. Tài khoản MinIO là `admin/password123`.
+- **MinIO Console:** `http://localhost:9001` (Tài khoản: `admin` / `password123`).
+- **Airflow Web UI:** `http://localhost:8080` (Tài khoản: `admin` / `admin`).
+- **Nessie Catalog:** `http://localhost:19120`.
 
-Pipeline nhiều nguồn có thể chạy thủ công bằng host environment:
+Chạy thủ công pipeline lakehouse trên máy host:
 
 ```powershell
 $python = "C:\Users\Administrator\miniconda3\envs\pyspark_env\python.exe"
@@ -66,118 +107,36 @@ $dir = ".\exercises\02-orders-lakehouse"
 & $python "$dir\run_gold.py"
 ```
 
-Các output trung gian nằm tại:
+---
 
-```text
-exercises/02-orders-lakehouse/output/bronze/web/
-exercises/02-orders-lakehouse/output/bronze/mobile/
-exercises/02-orders-lakehouse/output/bronze/store/
-exercises/02-orders-lakehouse/output/silver/
-```
+## 6. Tài liệu chi tiết từng bài
 
-Output CSV được upload vào bucket `lakehouse-demo`. Endpoint mặc định là
-`http://localhost:9000` khi chạy trên host; trong Airflow container Compose
-override endpoint thành `http://minio:9000`.
+- [00 – Read & Write Basics](./exercises/00-read-write-basics/README.md)
+- [00b – Data Cleaning Practice](./exercises/00b-data-cleaning-practice/README.md)
+- [01 – Orders Aggregation](./exercises/01-orders-aggregation/README.md)
+- [02 – Orders Lakehouse (Bronze-Silver-Gold)](./exercises/02-orders-lakehouse/README.md)
+- [03 – Airflow Orchestration](./exercises/03-airflow-orchestration/README.md)
+- [04 – Data Types & Schema Control](./exercises/04-data-types/README.md)
+- [05 – Joins: Orders x Customers](./exercises/05-joins/README.md)
+- [06 – Customer Transactions Pipeline](./exercises/06-customer-transactions/README.md)
+- [07 – Partitioning & Performance](./exercises/07-partitioning-performance/README.md)
+- [08 – Advanced Read/Write & Validation](./exercises/08-read-write-advance/README.md)
+- [09 – Full End-to-End ETL Pipeline](./exercises/09-full-etl-pipeline/README.md)
+- [10 – UDF, Pandas UDF & UDTF Benchmark](./exercises/10-udf-pandas-udtf/README.md)
 
-## Airflow orchestration
+---
 
-DAG nằm tại:
+## 7. Nhật ký tiến độ học tập
 
-```text
-exercises/03-airflow-orchestration/dags/orders_lakehouse_dag.py
-```
-
-Flow:
-
-```text
-bronze_web_task ─┐
-bronze_mobile_task├──> silver_task -> gold_task
-bronze_store_task ┘
-```
-
-Ba task Bronze nằm trong `TaskGroup` và hội tụ vào Silver. Airflow container
-được build từ `docker/airflow/Dockerfile`, bao gồm Java 17, PySpark 4.0.1 và
-`boto3`. Đăng nhập Airflow tại `http://localhost:8080` bằng:
-
-```text
-Username: admin
-Password: admin
-```
-
-Executor hiện tại là `SequentialExecutor`, nên DAG giữ đúng dependency nhưng
-ba Bronze sẽ được thực thi tuần tự. Đổi sang executor hỗ trợ concurrency nếu
-cần chạy đồng thời thật.
-
-## MinIO, Iceberg và Nessie
-
-- `minio`: S3-compatible object storage, API `http://localhost:9000`.
-- `minio-init`: tạo bucket `warehouse`.
-- `nessie`: catalog cho phần mở rộng Iceberg.
-- `lakehouse-demo`: bucket được các script PySpark tự tạo khi upload.
-
-## Spark output và troubleshooting
-
-Spark ghi CSV/Parquet thành thư mục gồm `_SUCCESS`, các file `part-*` và
-checksum, không phải một file duy nhất. `output/`, `__pycache__/` và `.pyc`
-đã được loại khỏi Git bằng `.gitignore`.
-
-Nếu Spark trên Windows cần Hadoop native helper:
-
-```powershell
-$env:HADOOP_HOME = "C:\hadoop"
-$env:Path = "$env:HADOOP_HOME\bin;$env:Path"
-```
-
-Nếu không kết nối được MinIO, kiểm tra `docker compose up -d` và các biến
-`MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`.
-
-## Tài liệu tham khảo
-
-- [Spark 4.0.1 User Guide](https://spark.apache.org/docs/4.0.1/)
-- [Data Types README](./exercises/00c-data-types/README.md)
-- [Orders Lakehouse README](./exercises/02-orders-lakehouse/README.md)
-- [Airflow orchestration README](./exercises/03-airflow-orchestration/README.md)
-
-## Nhật ký tiến độ
-
-### 07/09 - Tìm hiểu nền tảng Data Lakehouse
-
-Tổng hợp các khái niệm Data Lake, Data Warehouse, Lakehouse, Ingest,
-Bronze/Silver/Gold, ETL/ELT, Data Catalog, MinIO, Table Format, Nessie
-và Apache Spark. Đồng thời chuẩn bị dữ liệu CSV/JSON cho bài đọc ghi cơ bản.
-
-### 09/09 - Đọc ghi dữ liệu cơ bản
-
-Hoàn thành dữ liệu mẫu CSV và JSON cho bài `00-read-write-basics`, làm nền
-tảng cho việc đọc và ghi dữ liệu bằng PySpark.
-
-### 10/09 - Làm sạch và tổng hợp dữ liệu
-
-Thực hành làm sạch dữ liệu bằng DataFrame API, xây dựng bài orders
-aggregation với DataFrame API và Spark SQL, bao gồm lọc, group, aggregation
-theo tỉnh/thành và ghi kết quả ra output.
-
-### 11/09 - Lakehouse và Airflow orchestration
-
-Xây dựng pipeline Bronze -> Silver -> Gold cho dữ liệu orders, bổ sung làm
-sạch, chuẩn hóa, tổng hợp và upload output lên MinIO.
-
-Mở rộng pipeline cho ba nguồn Web, Mobile và Store. Bổ sung Airflow DAG để
-điều phối các job Bronze, Silver và Gold theo dependency.
-
-Đồng thời hoàn thiện tài liệu về Spark, MinIO, Iceberg, Nessie và Data
-Catalog trong kiến trúc Data Lakehouse.
-
-### 21/09 - Kiểu dữ liệu và kiểm soát schema (đang thực hiện)
-
-Đang làm bài `00c-data-types`: tìm hiểu kiểu dữ liệu cơ bản, `Double`/`Float`/
-`Decimal`, kiểu phức tạp (`Array`, `Struct`) và cast cột trong PySpark.
-
-- Tạo dataset thô `raw_orders_types.csv` (khớp với dữ liệu orders ở bài 01) có
-  `String`, `Integer`, `Decimal`, `Date`, `Timestamp`, `Array`, `Struct`.
-- Khai báo schema thủ công thay vì `inferSchema`.
-- Cast `amount`/`quantity`/`order_date`/`created_at` từ `String` sang đúng kiểu,
-  cố tình thêm dòng dữ liệu sai để quan sát kết quả cast (`NULL`, sai nghiệp vụ,
-  ANSI mode).
-
-Mục tiêu: hiểu datatype và vì sao ETL cần kiểm soát schema.
+- **07/09 – Nền tảng Data Lakehouse:** Tìm hiểu Data Lake vs Warehouse vs Lakehouse, Ingest, Bronze/Silver/Gold, ETL/ELT, MinIO, Nessie, Iceberg, Apache Spark.
+- **09/09 – Đọc/Ghi dữ liệu cơ bản:** Chuẩn bị dataset CSV/JSON và hoàn thiện bài `00-read-write-basics`.
+- **10/09 – Làm sạch và tổng hợp:** Thực hành làm sạch (`00b`), xây dựng bài toán orders aggregation với DataFrame API và Spark SQL (`01`).
+- **11/09 – Lakehouse đa nguồn & Airflow:** Xây dựng pipeline Bronze → Silver → Gold cho 3 nguồn Web/Mobile/Store, tích hợp MinIO S3 và điều phối bằng Airflow DAG (`02`, `03`).
+- **21/09 – Kiểu dữ liệu & Schema Control:** Hoàn thành bài `04-data-types`, làm chủ StructType thủ công, ép kiểu tiền tệ `Decimal` và kiểm soát ANSI mode.
+- **22/09 – Phép Join & Quản lý dữ liệu mồ côi:** Hoàn thành bài `05-joins`, so sánh Inner vs Left join, cô lập bản ghi unmapped để đối soát nghiệp vụ.
+- **23/09 – Deduplication & Window Functions:** Hoàn thành bài `06-customer-transactions`, khử duplicate bằng `row_number()`, xếp hạng Top-3 bằng `rank()` theo tỉnh, đối soát reconciliation 100% khớp.
+- **24/09 – Partitioning & Performance:** Hoàn thành bài `07-partitioning-performance`, đo lường thực nghiệm `repartition` vs `coalesce` vs `partitionBy`, phân tích hiện tượng hash collision và data skew.
+- **25/09 – Nâng cao Read/Write & Quarantine:** Hoàn thành bài `08-read-write-advance`, bắt lỗi định dạng ngày (`try_to_date`), phân loại lỗi `error_reason`, kiểm soát write modes.
+- **26/09 – Full ETL Pipeline:** Hoàn thành bài `09-full-etl-pipeline`, tích hợp toàn bộ các kỹ thuật thành một quy trình ETL 10 bước hoàn chỉnh chuẩn sản xuất.
+- **27/09 – UDF & Vectorized Execution:** Hoàn thành bài `10-udf-pandas-udtf`, benchmark trên 1.000.000 dòng giữa Python UDF (9.21s), Built-in function (3.98s), Pandas UDF vector hóa và UDTF đa dòng.
+- **28/09 – Chuẩn hóa cấu trúc Repository:** Tái cấu trúc toàn bộ thư mục `exercises/` theo chuẩn kebab-case đánh số thống nhất từ 00 đến 10, bổ sung đầy đủ script và tài liệu cho từng bài.

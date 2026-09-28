@@ -1,0 +1,6 @@
+customer_id,customer_name,email,customer_since
+C001,Nguyen Van A,a.nguyen@example.com,2025-01-15
+C002,Tran Thi B,b.tran@example.com,2025-02-20
+C003,Le Van C,c.le@example.com,2025-03-10
+C004,Pham Thi D,d.pham@example.com,2025-04-05
+C006,Vu Thi F,f.vu@example.com,2025-06-18
