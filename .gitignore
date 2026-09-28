@@ -25,6 +25,11 @@ htmlcov/
 # Spark & Job outputs
 **/output/
 **/output_1m/
+**/checkpoint/
+**/stream_input/*
+!**/stream_input/.gitkeep
+**/stream_input_exp/
+**/stream_input_write/
 *.crc
 metastore_db/
 derby.log

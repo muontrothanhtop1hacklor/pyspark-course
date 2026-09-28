@@ -39,7 +39,8 @@ pyspark-course/
 │   ├── 07-partitioning-performance/      ← repartition vs coalesce vs partitionBy & skew
 │   ├── 08-read-write-advance/            ← Schema tự khai báo, quarantine lỗi, write modes
 │   ├── 09-full-etl-pipeline/             ← Flow PySpark hoàn chỉnh 10 bước khép kín
-│   └── 10-udf-pandas-udtf/               ← Benchmark 1M dòng: UDF vs Pandas UDF vs Built-in
+│   ├── 10-udf-pandas-udtf/               ← Benchmark 1M dòng: UDF vs Pandas UDF vs Built-in
+│   └── 11-batch-vs-streaming/            ← Đối chiếu Batch vs Structured Streaming (micro-batch, checkpoint)
 ├── logs/                                 ← Mẫu nhật ký học tập theo từng buổi
 └── README.md
 ```
@@ -62,6 +63,7 @@ pyspark-course/
 | **08** | [`08-read-write-advance`](./exercises/08-read-write-advance/README.md) | Phân loại lỗi `error_reason`, overwrite/append/partitionBy | `orders_dirty.csv` (2k dòng) |
 | **09** | [`09-full-etl-pipeline`](./exercises/09-full-etl-pipeline/README.md) | Full Flow: read → clean → validate → dedup → join → aggregate → write | `orders_dup.csv` (3.15k dòng) |
 | **10** | [`10-udf-pandas-udtf`](./exercises/10-udf-pandas-udtf/README.md) | So sánh hiệu năng UDF vs Built-in vs Pandas UDF vs UDTF | `customers_1m.csv` (1M dòng) |
+| **11** | [`11-batch-vs-streaming`](./exercises/11-batch-vs-streaming/README.md) | Đối chiếu Batch vs Structured Streaming, micro-batch, checkpoint & audit | `orders_{1,2,3}.csv` (30 dòng) |
 
 ---
 
