@@ -55,7 +55,7 @@ Số liệu tính toán đối chiếu ban đầu:
 
 ---
 
-## 2. Kết quả Yêu cầu 1: Batch Processing
+## 2. Batch Processing
 
 Tập lệnh `req1_batch.py` đọc toàn bộ thư mục `data/batch_input`, thực hiện lọc và tính toán trong một lần chạy duy nhất.
 
@@ -76,7 +76,7 @@ Số lượng đơn hợp lệ ghi nhận là 21 và tổng doanh thu đạt 40,
 
 ---
 
-## 3. Kết quả Yêu cầu 2: Streaming cùng logic
+## 3. Streaming cùng logic
 
 Tập lệnh `req2_streaming_console.py` thiết lập cấu hình readStream với `maxFilesPerTrigger=1`, `trigger(processingTime="5 seconds")` và `outputMode("complete")`. Ba tệp CSV lần lượt được nạp vào thư mục `data/stream_input`.
 
@@ -88,7 +88,7 @@ Tập lệnh `req2_streaming_console.py` thiết lập cấu hình readStream v�
 
 ---
 
-## 4. Yêu cầu 3: So sánh Batch và Streaming
+## 4. So sánh Batch và Streaming
 
 Kết quả tính toán sau khi luồng hoàn tất xử lý 3 tệp tin trùng khớp với phương pháp xử lý theo lô ở Yêu cầu 1. Tổng số dòng hợp lệ và doanh số từng tỉnh thành không có sự sai lệch.
 
@@ -99,7 +99,7 @@ Ba điểm khác nhau giữa hai phương pháp:
 
 ---
 
-## 5. Yêu cầu 4: Thử nghiệm và quan sát lỗi
+## 5. Thử nghiệm và quan sát lỗi
 
 Tập lệnh `req4_experiments.py` ghi nhận các lỗi thực tế phát sinh:
 
@@ -136,7 +136,7 @@ Hàm Window không dựa trên mốc thời gian đòi hỏi lưu trữ vô hạ
 
 ---
 
-## 6. Yêu cầu 5: Ghi Parquet và cấu trúc checkpoint
+## 6. Ghi Parquet và cấu trúc checkpoint
 
 Tập lệnh `req5_write_and_check.py` ghi 21 bản ghi hợp lệ ra định dạng Parquet theo hai cơ chế: ghi đè ở batch và append có checkpoint ở streaming.
 
