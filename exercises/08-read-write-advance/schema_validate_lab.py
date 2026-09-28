@@ -6,8 +6,16 @@ Yêu cầu: pyspark đã cài. Có orders_dirty.csv cùng thư mục.
 """
 
 import os
+import sys
 import shutil
 import glob
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
+os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
+os.environ.setdefault("PYSPARK_DRIVER_PYTHON", sys.executable)
+
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, DoubleType
@@ -102,7 +110,10 @@ print("=" * 70)
 df_std = df.withColumn("status", F.upper(F.trim(F.col("status"))))
 
 # order_date hợp lệ nếu parse được theo format yyyy-MM-dd VÀ ra đúng ngày đó (không bị Spark tự "sửa")
-df_std = df_std.withColumn("order_date_parsed", F.expr("try_to_date(order_date, 'yyyy-MM-dd')"))
+df_std = df_std.withColumn(
+    "order_date_parsed",
+    F.to_date(F.try_to_timestamp(F.col("order_date"), F.lit("yyyy-MM-dd")))
+)
 
 df_flagged = df_std.withColumn(
     "error_reason",

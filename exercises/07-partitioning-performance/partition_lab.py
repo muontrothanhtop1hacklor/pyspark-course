@@ -6,9 +6,17 @@ Yêu cầu: pyspark đã cài, có orders.csv cùng thư mục.
 """
 
 import os
+import sys
 import shutil
 import glob
 import time
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
+os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
+os.environ.setdefault("PYSPARK_DRIVER_PYTHON", sys.executable)
+
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 

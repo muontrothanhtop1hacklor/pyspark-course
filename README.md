@@ -27,6 +27,7 @@ pyspark-course/
 │   └── airflow/
 │       └── Dockerfile
 ├── exercises/
+│   ├── common/                           ← Module dùng chung: schemas, provinces, rules, data generator
 │   ├── 00-read-write-basics/             ← Đọc/ghi CSV & JSON, tìm hiểu part-files
 │   ├── 00b-data-cleaning-practice/       ← Làm sạch cơ bản: na.drop, lọc khoảng giá trị
 │   ├── 01-orders-aggregation/            ← DataFrame API & Spark SQL aggregation

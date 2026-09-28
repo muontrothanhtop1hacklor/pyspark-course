@@ -10,8 +10,16 @@ tối ưu LIMIT), không phản ánh đúng hiệu năng khi dữ liệu lớn.
 """
 
 import os
+import sys
 import time
 import shutil
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
+os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
+os.environ.setdefault("PYSPARK_DRIVER_PYTHON", sys.executable)
+
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import StringType, DoubleType

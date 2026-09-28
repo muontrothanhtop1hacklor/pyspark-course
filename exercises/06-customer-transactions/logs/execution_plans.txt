@@ -17,53 +17,53 @@ AdaptiveSparkPlan (12)
 
 
 (1) Scan csv 
-Output [6]: [transaction_id#8, customer_id#9, amount#10, status#11, transaction_time#12, updated_at#13]
+Output [6]: [transaction_id#4, customer_id#5, amount#6, status#7, transaction_time#8, updated_at#9]
 Batched: false
-Location: InMemoryFileIndex [file:/home/claude/spark_customer_txn/data/transactions.csv]
+Location: InMemoryFileIndex [file:/C:/Users/Administrator/spark introduce learn/exercises/06-customer-transactions/data/transactions.csv]
 ReadSchema: struct<transaction_id:string,customer_id:string,amount:double,status:string,transaction_time:timestamp,updated_at:timestamp>
 
 (2) Filter
-Input [6]: [transaction_id#8, customer_id#9, amount#10, status#11, transaction_time#12, updated_at#13]
-Condition : CASE WHEN (CASE WHEN (trim(customer_id#9, None) = ) THEN true ELSE isnull(customer_id#9) END AND (amount#10 <= 0.0)) THEN false WHEN CASE WHEN (trim(customer_id#9, None) = ) THEN true ELSE isnull(customer_id#9) END THEN false WHEN (amount#10 <= 0.0) THEN false ELSE true END
+Input [6]: [transaction_id#4, customer_id#5, amount#6, status#7, transaction_time#8, updated_at#9]
+Condition : CASE WHEN (CASE WHEN (trim(customer_id#5, None) = ) THEN true ELSE isnull(customer_id#5) END AND (amount#6 <= 0.0)) THEN false WHEN CASE WHEN (trim(customer_id#5, None) = ) THEN true ELSE isnull(customer_id#5) END THEN false WHEN (amount#6 <= 0.0) THEN false ELSE true END
 
 (3) Project
-Output [6]: [transaction_id#8, CASE WHEN (trim(customer_id#9, None) = ) THEN null ELSE customer_id#9 END AS customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Input [6]: [transaction_id#8, customer_id#9, amount#10, status#11, transaction_time#12, updated_at#13]
+Output [6]: [transaction_id#4, CASE WHEN (trim(customer_id#5, None) = ) THEN null ELSE customer_id#5 END AS customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Input [6]: [transaction_id#4, customer_id#5, amount#6, status#7, transaction_time#8, updated_at#9]
 
 (4) Sort
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [transaction_id#8 ASC NULLS FIRST, updated_at#13 DESC NULLS LAST], false, 0
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [transaction_id#4 ASC NULLS FIRST, updated_at#9 DESC NULLS LAST], false, 0
 
 (5) WindowGroupLimit
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [transaction_id#8], [updated_at#13 DESC NULLS LAST], row_number(), 1, Partial
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [transaction_id#4], [updated_at#9 DESC NULLS LAST], row_number(), 1, Partial
 
 (6) Exchange
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: hashpartitioning(transaction_id#8, 4), ENSURE_REQUIREMENTS, [plan_id=391]
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: hashpartitioning(transaction_id#4, 4), ENSURE_REQUIREMENTS, [plan_id=397]
 
 (7) Sort
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [transaction_id#8 ASC NULLS FIRST, updated_at#13 DESC NULLS LAST], false, 0
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [transaction_id#4 ASC NULLS FIRST, updated_at#9 DESC NULLS LAST], false, 0
 
 (8) WindowGroupLimit
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [transaction_id#8], [updated_at#13 DESC NULLS LAST], row_number(), 1, Final
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [transaction_id#4], [updated_at#9 DESC NULLS LAST], row_number(), 1, Final
 
 (9) Window
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [row_number() windowspecdefinition(transaction_id#8, updated_at#13 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rn#90], [transaction_id#8], [updated_at#13 DESC NULLS LAST]
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [row_number() windowspecdefinition(transaction_id#4, updated_at#9 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rn#56], [transaction_id#4], [updated_at#9 DESC NULLS LAST]
 
 (10) Filter
-Input [7]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13, rn#90]
-Condition : (rn#90 = 1)
+Input [7]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9, rn#56]
+Condition : (rn#56 = 1)
 
 (11) Project
-Output [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Input [7]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13, rn#90]
+Output [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Input [7]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9, rn#56]
 
 (12) AdaptiveSparkPlan
-Output [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
+Output [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
 Arguments: isFinalPlan=false
 
 
@@ -93,55 +93,55 @@ AdaptiveSparkPlan (17)
 
 
 (1) Scan csv 
-Output [6]: [transaction_id#8, customer_id#9, amount#10, status#11, transaction_time#12, updated_at#13]
+Output [6]: [transaction_id#4, customer_id#5, amount#6, status#7, transaction_time#8, updated_at#9]
 Batched: false
-Location: InMemoryFileIndex [file:/home/claude/spark_customer_txn/data/transactions.csv]
+Location: InMemoryFileIndex [file:/C:/Users/Administrator/spark introduce learn/exercises/06-customer-transactions/data/transactions.csv]
 ReadSchema: struct<transaction_id:string,customer_id:string,amount:double,status:string,transaction_time:timestamp,updated_at:timestamp>
 
 (2) Filter
-Input [6]: [transaction_id#8, customer_id#9, amount#10, status#11, transaction_time#12, updated_at#13]
-Condition : CASE WHEN (CASE WHEN (trim(customer_id#9, None) = ) THEN true ELSE isnull(customer_id#9) END AND (amount#10 <= 0.0)) THEN false WHEN CASE WHEN (trim(customer_id#9, None) = ) THEN true ELSE isnull(customer_id#9) END THEN false WHEN (amount#10 <= 0.0) THEN false ELSE true END
+Input [6]: [transaction_id#4, customer_id#5, amount#6, status#7, transaction_time#8, updated_at#9]
+Condition : CASE WHEN (CASE WHEN (trim(customer_id#5, None) = ) THEN true ELSE isnull(customer_id#5) END AND (amount#6 <= 0.0)) THEN false WHEN CASE WHEN (trim(customer_id#5, None) = ) THEN true ELSE isnull(customer_id#5) END THEN false WHEN (amount#6 <= 0.0) THEN false ELSE true END
 
 (3) Project
-Output [6]: [transaction_id#8, CASE WHEN (trim(customer_id#9, None) = ) THEN null ELSE customer_id#9 END AS customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Input [6]: [transaction_id#8, customer_id#9, amount#10, status#11, transaction_time#12, updated_at#13]
+Output [6]: [transaction_id#4, CASE WHEN (trim(customer_id#5, None) = ) THEN null ELSE customer_id#5 END AS customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Input [6]: [transaction_id#4, customer_id#5, amount#6, status#7, transaction_time#8, updated_at#9]
 
 (4) Sort
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [transaction_id#8 ASC NULLS FIRST, updated_at#13 DESC NULLS LAST], false, 0
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [transaction_id#4 ASC NULLS FIRST, updated_at#9 DESC NULLS LAST], false, 0
 
 (5) WindowGroupLimit
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [transaction_id#8], [updated_at#13 DESC NULLS LAST], row_number(), 1, Partial
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [transaction_id#4], [updated_at#9 DESC NULLS LAST], row_number(), 1, Partial
 
 (6) Exchange
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: hashpartitioning(transaction_id#8, 4), ENSURE_REQUIREMENTS, [plan_id=445]
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: hashpartitioning(transaction_id#4, 4), ENSURE_REQUIREMENTS, [plan_id=451]
 
 (7) Sort
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [transaction_id#8 ASC NULLS FIRST, updated_at#13 DESC NULLS LAST], false, 0
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [transaction_id#4 ASC NULLS FIRST, updated_at#9 DESC NULLS LAST], false, 0
 
 (8) WindowGroupLimit
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [transaction_id#8], [updated_at#13 DESC NULLS LAST], row_number(), 1, Final
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [transaction_id#4], [updated_at#9 DESC NULLS LAST], row_number(), 1, Final
 
 (9) Window
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [row_number() windowspecdefinition(transaction_id#8, updated_at#13 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rn#90], [transaction_id#8], [updated_at#13 DESC NULLS LAST]
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [row_number() windowspecdefinition(transaction_id#4, updated_at#9 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rn#56], [transaction_id#4], [updated_at#9 DESC NULLS LAST]
 
 (10) Filter
-Input [7]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13, rn#90]
-Condition : (rn#90 = 1)
+Input [7]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9, rn#56]
+Condition : (rn#56 = 1)
 
 (11) Project
-Output [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Input [7]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13, rn#90]
+Output [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Input [7]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9, rn#56]
 
 (12) Scan csv 
 Output [4]: [customer_id#0, customer_name#1, province#2, created_at#3]
 Batched: false
-Location: InMemoryFileIndex [file:/home/claude/spark_customer_txn/data/customers.csv]
+Location: InMemoryFileIndex [file:/C:/Users/Administrator/spark introduce learn/exercises/06-customer-transactions/data/customers.csv]
 PushedFilters: [IsNotNull(customer_id)]
 ReadSchema: struct<customer_id:string,customer_name:string,province:string,created_at:timestamp>
 
@@ -151,20 +151,20 @@ Condition : isnotnull(customer_id#0)
 
 (14) BroadcastExchange
 Input [4]: [customer_id#0, customer_name#1, province#2, created_at#3]
-Arguments: HashedRelationBroadcastMode(List(input[0, string, false]),false), [plan_id=452]
+Arguments: HashedRelationBroadcastMode(List(input[0, string, false]),false), [plan_id=458]
 
 (15) BroadcastHashJoin
-Left keys [1]: [customer_id#20]
+Left keys [1]: [customer_id#11]
 Right keys [1]: [customer_id#0]
 Join type: LeftOuter
 Join condition: None
 
 (16) Project
-Output [9]: [customer_id#20, transaction_id#8, amount#10, status#11, transaction_time#12, updated_at#13, customer_name#1, province#2, created_at#3]
-Input [10]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13, customer_id#0, customer_name#1, province#2, created_at#3]
+Output [9]: [customer_id#11, transaction_id#4, amount#6, status#7, transaction_time#8, updated_at#9, customer_name#1, province#2, created_at#3]
+Input [10]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9, customer_id#0, customer_name#1, province#2, created_at#3]
 
 (17) AdaptiveSparkPlan
-Output [9]: [customer_id#20, transaction_id#8, amount#10, status#11, transaction_time#12, updated_at#13, customer_name#1, province#2, created_at#3]
+Output [9]: [customer_id#11, transaction_id#4, amount#6, status#7, transaction_time#8, updated_at#9, customer_name#1, province#2, created_at#3]
 Arguments: isFinalPlan=false
 
 
@@ -198,55 +198,55 @@ AdaptiveSparkPlan (21)
 
 
 (1) Scan csv 
-Output [6]: [transaction_id#8, customer_id#9, amount#10, status#11, transaction_time#12, updated_at#13]
+Output [6]: [transaction_id#4, customer_id#5, amount#6, status#7, transaction_time#8, updated_at#9]
 Batched: false
-Location: InMemoryFileIndex [file:/home/claude/spark_customer_txn/data/transactions.csv]
+Location: InMemoryFileIndex [file:/C:/Users/Administrator/spark introduce learn/exercises/06-customer-transactions/data/transactions.csv]
 ReadSchema: struct<transaction_id:string,customer_id:string,amount:double,status:string,transaction_time:timestamp,updated_at:timestamp>
 
 (2) Filter
-Input [6]: [transaction_id#8, customer_id#9, amount#10, status#11, transaction_time#12, updated_at#13]
-Condition : CASE WHEN (CASE WHEN (trim(customer_id#9, None) = ) THEN true ELSE isnull(customer_id#9) END AND (amount#10 <= 0.0)) THEN false WHEN CASE WHEN (trim(customer_id#9, None) = ) THEN true ELSE isnull(customer_id#9) END THEN false WHEN (amount#10 <= 0.0) THEN false ELSE true END
+Input [6]: [transaction_id#4, customer_id#5, amount#6, status#7, transaction_time#8, updated_at#9]
+Condition : CASE WHEN (CASE WHEN (trim(customer_id#5, None) = ) THEN true ELSE isnull(customer_id#5) END AND (amount#6 <= 0.0)) THEN false WHEN CASE WHEN (trim(customer_id#5, None) = ) THEN true ELSE isnull(customer_id#5) END THEN false WHEN (amount#6 <= 0.0) THEN false ELSE true END
 
 (3) Project
-Output [6]: [transaction_id#8, CASE WHEN (trim(customer_id#9, None) = ) THEN null ELSE customer_id#9 END AS customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Input [6]: [transaction_id#8, customer_id#9, amount#10, status#11, transaction_time#12, updated_at#13]
+Output [6]: [transaction_id#4, CASE WHEN (trim(customer_id#5, None) = ) THEN null ELSE customer_id#5 END AS customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Input [6]: [transaction_id#4, customer_id#5, amount#6, status#7, transaction_time#8, updated_at#9]
 
 (4) Sort
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [transaction_id#8 ASC NULLS FIRST, updated_at#13 DESC NULLS LAST], false, 0
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [transaction_id#4 ASC NULLS FIRST, updated_at#9 DESC NULLS LAST], false, 0
 
 (5) WindowGroupLimit
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [transaction_id#8], [updated_at#13 DESC NULLS LAST], row_number(), 1, Partial
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [transaction_id#4], [updated_at#9 DESC NULLS LAST], row_number(), 1, Partial
 
 (6) Exchange
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: hashpartitioning(transaction_id#8, 4), ENSURE_REQUIREMENTS, [plan_id=1055]
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: hashpartitioning(transaction_id#4, 4), ENSURE_REQUIREMENTS, [plan_id=1063]
 
 (7) Sort
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [transaction_id#8 ASC NULLS FIRST, updated_at#13 DESC NULLS LAST], false, 0
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [transaction_id#4 ASC NULLS FIRST, updated_at#9 DESC NULLS LAST], false, 0
 
 (8) WindowGroupLimit
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [transaction_id#8], [updated_at#13 DESC NULLS LAST], row_number(), 1, Final
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [transaction_id#4], [updated_at#9 DESC NULLS LAST], row_number(), 1, Final
 
 (9) Window
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Arguments: [row_number() windowspecdefinition(transaction_id#8, updated_at#13 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rn#90], [transaction_id#8], [updated_at#13 DESC NULLS LAST]
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Arguments: [row_number() windowspecdefinition(transaction_id#4, updated_at#9 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rn#56], [transaction_id#4], [updated_at#9 DESC NULLS LAST]
 
 (10) Filter
-Input [7]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13, rn#90]
-Condition : ((rn#90 = 1) AND isnotnull(customer_id#20))
+Input [7]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9, rn#56]
+Condition : ((rn#56 = 1) AND isnotnull(customer_id#11))
 
 (11) Project
-Output [6]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13]
-Input [7]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13, rn#90]
+Output [6]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9]
+Input [7]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9, rn#56]
 
 (12) Scan csv 
 Output [4]: [customer_id#0, customer_name#1, province#2, created_at#3]
 Batched: false
-Location: InMemoryFileIndex [file:/home/claude/spark_customer_txn/data/customers.csv]
+Location: InMemoryFileIndex [file:/C:/Users/Administrator/spark introduce learn/exercises/06-customer-transactions/data/customers.csv]
 PushedFilters: [IsNotNull(customer_name), IsNotNull(customer_id)]
 ReadSchema: struct<customer_id:string,customer_name:string,province:string,created_at:timestamp>
 
@@ -256,36 +256,36 @@ Condition : (isnotnull(customer_name#1) AND isnotnull(customer_id#0))
 
 (14) BroadcastExchange
 Input [4]: [customer_id#0, customer_name#1, province#2, created_at#3]
-Arguments: HashedRelationBroadcastMode(List(input[0, string, false]),false), [plan_id=1062]
+Arguments: HashedRelationBroadcastMode(List(input[0, string, false]),false), [plan_id=1070]
 
 (15) BroadcastHashJoin
-Left keys [1]: [customer_id#20]
+Left keys [1]: [customer_id#11]
 Right keys [1]: [customer_id#0]
 Join type: Inner
 Join condition: None
 
 (16) Project
-Output [9]: [customer_id#20, transaction_id#8, amount#10, status#11, transaction_time#12, updated_at#13, customer_name#1, province#2, created_at#3]
-Input [10]: [transaction_id#8, customer_id#20, amount#10, status#11, transaction_time#12, updated_at#13, customer_id#0, customer_name#1, province#2, created_at#3]
+Output [9]: [customer_id#11, transaction_id#4, amount#6, status#7, transaction_time#8, updated_at#9, customer_name#1, province#2, created_at#3]
+Input [10]: [transaction_id#4, customer_id#11, amount#6, status#7, transaction_time#8, updated_at#9, customer_id#0, customer_name#1, province#2, created_at#3]
 
 (17) Exchange
-Input [9]: [customer_id#20, transaction_id#8, amount#10, status#11, transaction_time#12, updated_at#13, customer_name#1, province#2, created_at#3]
-Arguments: hashpartitioning(customer_id#20, 4), ENSURE_REQUIREMENTS, [plan_id=1066]
+Input [9]: [customer_id#11, transaction_id#4, amount#6, status#7, transaction_time#8, updated_at#9, customer_name#1, province#2, created_at#3]
+Arguments: hashpartitioning(customer_id#11, 4), ENSURE_REQUIREMENTS, [plan_id=1074]
 
 (18) Sort
-Input [9]: [customer_id#20, transaction_id#8, amount#10, status#11, transaction_time#12, updated_at#13, customer_name#1, province#2, created_at#3]
-Arguments: [customer_id#20 ASC NULLS FIRST, transaction_time#12 DESC NULLS LAST], false, 0
+Input [9]: [customer_id#11, transaction_id#4, amount#6, status#7, transaction_time#8, updated_at#9, customer_name#1, province#2, created_at#3]
+Arguments: [customer_id#11 ASC NULLS FIRST, transaction_time#8 DESC NULLS LAST], false, 0
 
 (19) Window
-Input [9]: [customer_id#20, transaction_id#8, amount#10, status#11, transaction_time#12, updated_at#13, customer_name#1, province#2, created_at#3]
-Arguments: [row_number() windowspecdefinition(customer_id#20, transaction_time#12 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS _we0#184], [customer_id#20], [transaction_time#12 DESC NULLS LAST]
+Input [9]: [customer_id#11, transaction_id#4, amount#6, status#7, transaction_time#8, updated_at#9, customer_name#1, province#2, created_at#3]
+Arguments: [row_number() windowspecdefinition(customer_id#11, transaction_time#8 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS _we0#125], [customer_id#11], [transaction_time#8 DESC NULLS LAST]
 
 (20) Project
-Output [10]: [customer_id#20, transaction_id#8, amount#10, status#11, transaction_time#12, updated_at#13, customer_name#1, province#2, created_at#3, (_we0#184 = 1) AS is_latest_txn#183]
-Input [10]: [customer_id#20, transaction_id#8, amount#10, status#11, transaction_time#12, updated_at#13, customer_name#1, province#2, created_at#3, _we0#184]
+Output [10]: [customer_id#11, transaction_id#4, amount#6, status#7, transaction_time#8, updated_at#9, customer_name#1, province#2, created_at#3, (_we0#125 = 1) AS is_latest_txn#123]
+Input [10]: [customer_id#11, transaction_id#4, amount#6, status#7, transaction_time#8, updated_at#9, customer_name#1, province#2, created_at#3, _we0#125]
 
 (21) AdaptiveSparkPlan
-Output [10]: [customer_id#20, transaction_id#8, amount#10, status#11, transaction_time#12, updated_at#13, customer_name#1, province#2, created_at#3, is_latest_txn#183]
+Output [10]: [customer_id#11, transaction_id#4, amount#6, status#7, transaction_time#8, updated_at#9, customer_name#1, province#2, created_at#3, is_latest_txn#123]
 Arguments: isFinalPlan=false
 
 
@@ -318,55 +318,55 @@ AdaptiveSparkPlan (20)
 
 
 (1) Scan csv 
-Output [5]: [transaction_id#8, customer_id#9, amount#10, status#11, updated_at#13]
+Output [5]: [transaction_id#4, customer_id#5, amount#6, status#7, updated_at#9]
 Batched: false
-Location: InMemoryFileIndex [file:/home/claude/spark_customer_txn/data/transactions.csv]
+Location: InMemoryFileIndex [file:/C:/Users/Administrator/spark introduce learn/exercises/06-customer-transactions/data/transactions.csv]
 ReadSchema: struct<transaction_id:string,customer_id:string,amount:double,status:string,updated_at:timestamp>
 
 (2) Filter
-Input [5]: [transaction_id#8, customer_id#9, amount#10, status#11, updated_at#13]
-Condition : CASE WHEN (CASE WHEN (trim(customer_id#9, None) = ) THEN true ELSE isnull(customer_id#9) END AND (amount#10 <= 0.0)) THEN false WHEN CASE WHEN (trim(customer_id#9, None) = ) THEN true ELSE isnull(customer_id#9) END THEN false WHEN (amount#10 <= 0.0) THEN false ELSE true END
+Input [5]: [transaction_id#4, customer_id#5, amount#6, status#7, updated_at#9]
+Condition : CASE WHEN (CASE WHEN (trim(customer_id#5, None) = ) THEN true ELSE isnull(customer_id#5) END AND (amount#6 <= 0.0)) THEN false WHEN CASE WHEN (trim(customer_id#5, None) = ) THEN true ELSE isnull(customer_id#5) END THEN false WHEN (amount#6 <= 0.0) THEN false ELSE true END
 
 (3) Project
-Output [5]: [transaction_id#8, CASE WHEN (trim(customer_id#9, None) = ) THEN null ELSE customer_id#9 END AS customer_id#20, amount#10, status#11, updated_at#13]
-Input [5]: [transaction_id#8, customer_id#9, amount#10, status#11, updated_at#13]
+Output [5]: [transaction_id#4, CASE WHEN (trim(customer_id#5, None) = ) THEN null ELSE customer_id#5 END AS customer_id#11, amount#6, status#7, updated_at#9]
+Input [5]: [transaction_id#4, customer_id#5, amount#6, status#7, updated_at#9]
 
 (4) Sort
-Input [5]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13]
-Arguments: [transaction_id#8 ASC NULLS FIRST, updated_at#13 DESC NULLS LAST], false, 0
+Input [5]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9]
+Arguments: [transaction_id#4 ASC NULLS FIRST, updated_at#9 DESC NULLS LAST], false, 0
 
 (5) WindowGroupLimit
-Input [5]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13]
-Arguments: [transaction_id#8], [updated_at#13 DESC NULLS LAST], row_number(), 1, Partial
+Input [5]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9]
+Arguments: [transaction_id#4], [updated_at#9 DESC NULLS LAST], row_number(), 1, Partial
 
 (6) Exchange
-Input [5]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13]
-Arguments: hashpartitioning(transaction_id#8, 4), ENSURE_REQUIREMENTS, [plan_id=1127]
+Input [5]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9]
+Arguments: hashpartitioning(transaction_id#4, 4), ENSURE_REQUIREMENTS, [plan_id=1135]
 
 (7) Sort
-Input [5]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13]
-Arguments: [transaction_id#8 ASC NULLS FIRST, updated_at#13 DESC NULLS LAST], false, 0
+Input [5]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9]
+Arguments: [transaction_id#4 ASC NULLS FIRST, updated_at#9 DESC NULLS LAST], false, 0
 
 (8) WindowGroupLimit
-Input [5]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13]
-Arguments: [transaction_id#8], [updated_at#13 DESC NULLS LAST], row_number(), 1, Final
+Input [5]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9]
+Arguments: [transaction_id#4], [updated_at#9 DESC NULLS LAST], row_number(), 1, Final
 
 (9) Window
-Input [5]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13]
-Arguments: [row_number() windowspecdefinition(transaction_id#8, updated_at#13 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rn#90], [transaction_id#8], [updated_at#13 DESC NULLS LAST]
+Input [5]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9]
+Arguments: [row_number() windowspecdefinition(transaction_id#4, updated_at#9 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rn#56], [transaction_id#4], [updated_at#9 DESC NULLS LAST]
 
 (10) Filter
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13, rn#90]
-Condition : ((rn#90 = 1) AND isnotnull(customer_id#20))
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9, rn#56]
+Condition : ((rn#56 = 1) AND isnotnull(customer_id#11))
 
 (11) Project
-Output [4]: [transaction_id#8, customer_id#20, amount#10, status#11]
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13, rn#90]
+Output [4]: [transaction_id#4, customer_id#11, amount#6, status#7]
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9, rn#56]
 
 (12) Scan csv 
 Output [3]: [customer_id#0, customer_name#1, province#2]
 Batched: false
-Location: InMemoryFileIndex [file:/home/claude/spark_customer_txn/data/customers.csv]
+Location: InMemoryFileIndex [file:/C:/Users/Administrator/spark introduce learn/exercises/06-customer-transactions/data/customers.csv]
 PushedFilters: [IsNotNull(customer_name), IsNotNull(customer_id)]
 ReadSchema: struct<customer_id:string,customer_name:string,province:string>
 
@@ -376,38 +376,38 @@ Condition : (isnotnull(customer_name#1) AND isnotnull(customer_id#0))
 
 (14) BroadcastExchange
 Input [3]: [customer_id#0, customer_name#1, province#2]
-Arguments: HashedRelationBroadcastMode(List(input[0, string, false]),false), [plan_id=1134]
+Arguments: HashedRelationBroadcastMode(List(input[0, string, false]),false), [plan_id=1142]
 
 (15) BroadcastHashJoin
-Left keys [1]: [customer_id#20]
+Left keys [1]: [customer_id#11]
 Right keys [1]: [customer_id#0]
 Join type: Inner
 Join condition: None
 
 (16) Project
-Output [6]: [customer_id#20, transaction_id#8, amount#10, status#11, customer_name#1, province#2]
-Input [7]: [transaction_id#8, customer_id#20, amount#10, status#11, customer_id#0, customer_name#1, province#2]
+Output [6]: [customer_id#11, transaction_id#4, amount#6, status#7, customer_name#1, province#2]
+Input [7]: [transaction_id#4, customer_id#11, amount#6, status#7, customer_id#0, customer_name#1, province#2]
 
 (17) HashAggregate
-Input [6]: [customer_id#20, transaction_id#8, amount#10, status#11, customer_name#1, province#2]
-Keys [3]: [customer_id#20, customer_name#1, province#2]
-Functions [3]: [partial_count(transaction_id#8), partial_sum(amount#10), partial_sum(CASE WHEN (status#11 = SUCCESS) THEN 1 ELSE 0 END)]
-Aggregate Attributes [3]: [count#227L, sum#228, sum#229L]
-Results [6]: [customer_id#20, customer_name#1, province#2, count#230L, sum#231, sum#232L]
+Input [6]: [customer_id#11, transaction_id#4, amount#6, status#7, customer_name#1, province#2]
+Keys [3]: [customer_id#11, customer_name#1, province#2]
+Functions [3]: [partial_count(transaction_id#4), partial_sum(amount#6), partial_sum(CASE WHEN (status#7 = SUCCESS) THEN 1 ELSE 0 END)]
+Aggregate Attributes [3]: [count#145L, sum#146, sum#147L]
+Results [6]: [customer_id#11, customer_name#1, province#2, count#148L, sum#149, sum#150L]
 
 (18) Exchange
-Input [6]: [customer_id#20, customer_name#1, province#2, count#230L, sum#231, sum#232L]
-Arguments: hashpartitioning(customer_id#20, customer_name#1, province#2, 4), ENSURE_REQUIREMENTS, [plan_id=1139]
+Input [6]: [customer_id#11, customer_name#1, province#2, count#148L, sum#149, sum#150L]
+Arguments: hashpartitioning(customer_id#11, customer_name#1, province#2, 4), ENSURE_REQUIREMENTS, [plan_id=1147]
 
 (19) HashAggregate
-Input [6]: [customer_id#20, customer_name#1, province#2, count#230L, sum#231, sum#232L]
-Keys [3]: [customer_id#20, customer_name#1, province#2]
-Functions [3]: [count(transaction_id#8), sum(amount#10), sum(CASE WHEN (status#11 = SUCCESS) THEN 1 ELSE 0 END)]
-Aggregate Attributes [3]: [count(transaction_id#8)#215L, sum(amount#10)#217, sum(CASE WHEN (status#11 = SUCCESS) THEN 1 ELSE 0 END)#219L]
-Results [6]: [customer_id#20, customer_name#1, province#2, count(transaction_id#8)#215L AS total_transactions#216L, sum(amount#10)#217 AS total_amount#218, sum(CASE WHEN (status#11 = SUCCESS) THEN 1 ELSE 0 END)#219L AS success_transactions#220L]
+Input [6]: [customer_id#11, customer_name#1, province#2, count#148L, sum#149, sum#150L]
+Keys [3]: [customer_id#11, customer_name#1, province#2]
+Functions [3]: [count(transaction_id#4), sum(amount#6), sum(CASE WHEN (status#7 = SUCCESS) THEN 1 ELSE 0 END)]
+Aggregate Attributes [3]: [count(transaction_id#4)#142L, sum(amount#6)#143, sum(CASE WHEN (status#7 = SUCCESS) THEN 1 ELSE 0 END)#144L]
+Results [6]: [customer_id#11, customer_name#1, province#2, count(transaction_id#4)#142L AS total_transactions#130L, sum(amount#6)#143 AS total_amount#131, sum(CASE WHEN (status#7 = SUCCESS) THEN 1 ELSE 0 END)#144L AS success_transactions#132L]
 
 (20) AdaptiveSparkPlan
-Output [6]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L]
+Output [6]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L]
 Arguments: isFinalPlan=false
 
 
@@ -477,55 +477,55 @@ AdaptiveSparkPlan (57)
 
 
 (1) Scan csv 
-Output [5]: [transaction_id#8, customer_id#9, amount#10, status#11, updated_at#13]
+Output [5]: [transaction_id#4, customer_id#5, amount#6, status#7, updated_at#9]
 Batched: false
-Location: InMemoryFileIndex [file:/home/claude/spark_customer_txn/data/transactions.csv]
+Location: InMemoryFileIndex [file:/C:/Users/Administrator/spark introduce learn/exercises/06-customer-transactions/data/transactions.csv]
 ReadSchema: struct<transaction_id:string,customer_id:string,amount:double,status:string,updated_at:timestamp>
 
 (2) Filter
-Input [5]: [transaction_id#8, customer_id#9, amount#10, status#11, updated_at#13]
-Condition : CASE WHEN (CASE WHEN (trim(customer_id#9, None) = ) THEN true ELSE isnull(customer_id#9) END AND (amount#10 <= 0.0)) THEN false WHEN CASE WHEN (trim(customer_id#9, None) = ) THEN true ELSE isnull(customer_id#9) END THEN false WHEN (amount#10 <= 0.0) THEN false ELSE true END
+Input [5]: [transaction_id#4, customer_id#5, amount#6, status#7, updated_at#9]
+Condition : CASE WHEN (CASE WHEN (trim(customer_id#5, None) = ) THEN true ELSE isnull(customer_id#5) END AND (amount#6 <= 0.0)) THEN false WHEN CASE WHEN (trim(customer_id#5, None) = ) THEN true ELSE isnull(customer_id#5) END THEN false WHEN (amount#6 <= 0.0) THEN false ELSE true END
 
 (3) Project
-Output [5]: [transaction_id#8, CASE WHEN (trim(customer_id#9, None) = ) THEN null ELSE customer_id#9 END AS customer_id#20, amount#10, status#11, updated_at#13]
-Input [5]: [transaction_id#8, customer_id#9, amount#10, status#11, updated_at#13]
+Output [5]: [transaction_id#4, CASE WHEN (trim(customer_id#5, None) = ) THEN null ELSE customer_id#5 END AS customer_id#11, amount#6, status#7, updated_at#9]
+Input [5]: [transaction_id#4, customer_id#5, amount#6, status#7, updated_at#9]
 
 (4) Sort
-Input [5]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13]
-Arguments: [transaction_id#8 ASC NULLS FIRST, updated_at#13 DESC NULLS LAST], false, 0
+Input [5]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9]
+Arguments: [transaction_id#4 ASC NULLS FIRST, updated_at#9 DESC NULLS LAST], false, 0
 
 (5) WindowGroupLimit
-Input [5]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13]
-Arguments: [transaction_id#8], [updated_at#13 DESC NULLS LAST], row_number(), 1, Partial
+Input [5]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9]
+Arguments: [transaction_id#4], [updated_at#9 DESC NULLS LAST], row_number(), 1, Partial
 
 (6) Exchange
-Input [5]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13]
-Arguments: hashpartitioning(transaction_id#8, 4), ENSURE_REQUIREMENTS, [plan_id=2229]
+Input [5]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9]
+Arguments: hashpartitioning(transaction_id#4, 4), ENSURE_REQUIREMENTS, [plan_id=2225]
 
 (7) Sort
-Input [5]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13]
-Arguments: [transaction_id#8 ASC NULLS FIRST, updated_at#13 DESC NULLS LAST], false, 0
+Input [5]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9]
+Arguments: [transaction_id#4 ASC NULLS FIRST, updated_at#9 DESC NULLS LAST], false, 0
 
 (8) WindowGroupLimit
-Input [5]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13]
-Arguments: [transaction_id#8], [updated_at#13 DESC NULLS LAST], row_number(), 1, Final
+Input [5]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9]
+Arguments: [transaction_id#4], [updated_at#9 DESC NULLS LAST], row_number(), 1, Final
 
 (9) Window
-Input [5]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13]
-Arguments: [row_number() windowspecdefinition(transaction_id#8, updated_at#13 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rn#90], [transaction_id#8], [updated_at#13 DESC NULLS LAST]
+Input [5]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9]
+Arguments: [row_number() windowspecdefinition(transaction_id#4, updated_at#9 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rn#56], [transaction_id#4], [updated_at#9 DESC NULLS LAST]
 
 (10) Filter
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13, rn#90]
-Condition : ((rn#90 = 1) AND isnotnull(customer_id#20))
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9, rn#56]
+Condition : ((rn#56 = 1) AND isnotnull(customer_id#11))
 
 (11) Project
-Output [4]: [transaction_id#8, customer_id#20, amount#10, status#11]
-Input [6]: [transaction_id#8, customer_id#20, amount#10, status#11, updated_at#13, rn#90]
+Output [4]: [transaction_id#4, customer_id#11, amount#6, status#7]
+Input [6]: [transaction_id#4, customer_id#11, amount#6, status#7, updated_at#9, rn#56]
 
 (12) Scan csv 
 Output [3]: [customer_id#0, customer_name#1, province#2]
 Batched: false
-Location: InMemoryFileIndex [file:/home/claude/spark_customer_txn/data/customers.csv]
+Location: InMemoryFileIndex [file:/C:/Users/Administrator/spark introduce learn/exercises/06-customer-transactions/data/customers.csv]
 PushedFilters: [IsNotNull(customer_name), IsNotNull(customer_id)]
 ReadSchema: struct<customer_id:string,customer_name:string,province:string>
 
@@ -535,195 +535,195 @@ Condition : (isnotnull(customer_name#1) AND isnotnull(customer_id#0))
 
 (14) BroadcastExchange
 Input [3]: [customer_id#0, customer_name#1, province#2]
-Arguments: HashedRelationBroadcastMode(List(input[0, string, false]),false), [plan_id=2236]
+Arguments: HashedRelationBroadcastMode(List(input[0, string, false]),false), [plan_id=2232]
 
 (15) BroadcastHashJoin
-Left keys [1]: [customer_id#20]
+Left keys [1]: [customer_id#11]
 Right keys [1]: [customer_id#0]
 Join type: Inner
 Join condition: None
 
 (16) Project
-Output [6]: [customer_id#20, transaction_id#8, amount#10, status#11, customer_name#1, province#2]
-Input [7]: [transaction_id#8, customer_id#20, amount#10, status#11, customer_id#0, customer_name#1, province#2]
+Output [6]: [customer_id#11, transaction_id#4, amount#6, status#7, customer_name#1, province#2]
+Input [7]: [transaction_id#4, customer_id#11, amount#6, status#7, customer_id#0, customer_name#1, province#2]
 
 (17) HashAggregate
-Input [6]: [customer_id#20, transaction_id#8, amount#10, status#11, customer_name#1, province#2]
-Keys [3]: [customer_id#20, customer_name#1, province#2]
-Functions [3]: [partial_count(transaction_id#8), partial_sum(amount#10), partial_sum(CASE WHEN (status#11 = SUCCESS) THEN 1 ELSE 0 END)]
-Aggregate Attributes [3]: [count#227L, sum#228, sum#229L]
-Results [6]: [customer_id#20, customer_name#1, province#2, count#230L, sum#231, sum#232L]
+Input [6]: [customer_id#11, transaction_id#4, amount#6, status#7, customer_name#1, province#2]
+Keys [3]: [customer_id#11, customer_name#1, province#2]
+Functions [3]: [partial_count(transaction_id#4), partial_sum(amount#6), partial_sum(CASE WHEN (status#7 = SUCCESS) THEN 1 ELSE 0 END)]
+Aggregate Attributes [3]: [count#145L, sum#146, sum#147L]
+Results [6]: [customer_id#11, customer_name#1, province#2, count#148L, sum#149, sum#150L]
 
 (18) Exchange
-Input [6]: [customer_id#20, customer_name#1, province#2, count#230L, sum#231, sum#232L]
-Arguments: hashpartitioning(customer_id#20, customer_name#1, province#2, 4), ENSURE_REQUIREMENTS, [plan_id=2241]
+Input [6]: [customer_id#11, customer_name#1, province#2, count#148L, sum#149, sum#150L]
+Arguments: hashpartitioning(customer_id#11, customer_name#1, province#2, 4), ENSURE_REQUIREMENTS, [plan_id=2237]
 
 (19) HashAggregate
-Input [6]: [customer_id#20, customer_name#1, province#2, count#230L, sum#231, sum#232L]
-Keys [3]: [customer_id#20, customer_name#1, province#2]
-Functions [3]: [count(transaction_id#8), sum(amount#10), sum(CASE WHEN (status#11 = SUCCESS) THEN 1 ELSE 0 END)]
-Aggregate Attributes [3]: [count(transaction_id#8)#215L, sum(amount#10)#217, sum(CASE WHEN (status#11 = SUCCESS) THEN 1 ELSE 0 END)#219L]
-Results [6]: [customer_id#20, customer_name#1, province#2, count(transaction_id#8)#215L AS total_transactions#216L, sum(amount#10)#217 AS total_amount#218, sum(CASE WHEN (status#11 = SUCCESS) THEN 1 ELSE 0 END)#219L AS success_transactions#220L]
+Input [6]: [customer_id#11, customer_name#1, province#2, count#148L, sum#149, sum#150L]
+Keys [3]: [customer_id#11, customer_name#1, province#2]
+Functions [3]: [count(transaction_id#4), sum(amount#6), sum(CASE WHEN (status#7 = SUCCESS) THEN 1 ELSE 0 END)]
+Aggregate Attributes [3]: [count(transaction_id#4)#142L, sum(amount#6)#143, sum(CASE WHEN (status#7 = SUCCESS) THEN 1 ELSE 0 END)#144L]
+Results [6]: [customer_id#11, customer_name#1, province#2, count(transaction_id#4)#142L AS total_transactions#130L, sum(amount#6)#143 AS total_amount#131, sum(CASE WHEN (status#7 = SUCCESS) THEN 1 ELSE 0 END)#144L AS success_transactions#132L]
 
 (20) Scan csv 
-Output [6]: [transaction_id#238, customer_id#239, amount#240, status#241, transaction_time#242, updated_at#243]
+Output [6]: [transaction_id#151, customer_id#152, amount#153, status#154, transaction_time#155, updated_at#156]
 Batched: false
-Location: InMemoryFileIndex [file:/home/claude/spark_customer_txn/data/transactions.csv]
+Location: InMemoryFileIndex [file:/C:/Users/Administrator/spark introduce learn/exercises/06-customer-transactions/data/transactions.csv]
 ReadSchema: struct<transaction_id:string,customer_id:string,amount:double,status:string,transaction_time:timestamp,updated_at:timestamp>
 
 (21) Filter
-Input [6]: [transaction_id#238, customer_id#239, amount#240, status#241, transaction_time#242, updated_at#243]
-Condition : CASE WHEN (CASE WHEN (trim(customer_id#239, None) = ) THEN true ELSE isnull(customer_id#239) END AND (amount#240 <= 0.0)) THEN false WHEN CASE WHEN (trim(customer_id#239, None) = ) THEN true ELSE isnull(customer_id#239) END THEN false WHEN (amount#240 <= 0.0) THEN false ELSE true END
+Input [6]: [transaction_id#151, customer_id#152, amount#153, status#154, transaction_time#155, updated_at#156]
+Condition : CASE WHEN (CASE WHEN (trim(customer_id#152, None) = ) THEN true ELSE isnull(customer_id#152) END AND (amount#153 <= 0.0)) THEN false WHEN CASE WHEN (trim(customer_id#152, None) = ) THEN true ELSE isnull(customer_id#152) END THEN false WHEN (amount#153 <= 0.0) THEN false ELSE true END
 
 (22) Project
-Output [6]: [transaction_id#238, CASE WHEN (trim(customer_id#239, None) = ) THEN null ELSE customer_id#239 END AS customer_id#248, amount#240, status#241, transaction_time#242, updated_at#243]
-Input [6]: [transaction_id#238, customer_id#239, amount#240, status#241, transaction_time#242, updated_at#243]
+Output [6]: [transaction_id#151, CASE WHEN (trim(customer_id#152, None) = ) THEN null ELSE customer_id#152 END AS customer_id#157, amount#153, status#154, transaction_time#155, updated_at#156]
+Input [6]: [transaction_id#151, customer_id#152, amount#153, status#154, transaction_time#155, updated_at#156]
 
 (23) Sort
-Input [6]: [transaction_id#238, customer_id#248, amount#240, status#241, transaction_time#242, updated_at#243]
-Arguments: [transaction_id#238 ASC NULLS FIRST, updated_at#243 DESC NULLS LAST], false, 0
+Input [6]: [transaction_id#151, customer_id#157, amount#153, status#154, transaction_time#155, updated_at#156]
+Arguments: [transaction_id#151 ASC NULLS FIRST, updated_at#156 DESC NULLS LAST], false, 0
 
 (24) WindowGroupLimit
-Input [6]: [transaction_id#238, customer_id#248, amount#240, status#241, transaction_time#242, updated_at#243]
-Arguments: [transaction_id#238], [updated_at#243 DESC NULLS LAST], row_number(), 1, Partial
+Input [6]: [transaction_id#151, customer_id#157, amount#153, status#154, transaction_time#155, updated_at#156]
+Arguments: [transaction_id#151], [updated_at#156 DESC NULLS LAST], row_number(), 1, Partial
 
 (25) Exchange
-Input [6]: [transaction_id#238, customer_id#248, amount#240, status#241, transaction_time#242, updated_at#243]
-Arguments: hashpartitioning(transaction_id#238, 4), ENSURE_REQUIREMENTS, [plan_id=2246]
+Input [6]: [transaction_id#151, customer_id#157, amount#153, status#154, transaction_time#155, updated_at#156]
+Arguments: hashpartitioning(transaction_id#151, 4), ENSURE_REQUIREMENTS, [plan_id=2242]
 
 (26) Sort
-Input [6]: [transaction_id#238, customer_id#248, amount#240, status#241, transaction_time#242, updated_at#243]
-Arguments: [transaction_id#238 ASC NULLS FIRST, updated_at#243 DESC NULLS LAST], false, 0
+Input [6]: [transaction_id#151, customer_id#157, amount#153, status#154, transaction_time#155, updated_at#156]
+Arguments: [transaction_id#151 ASC NULLS FIRST, updated_at#156 DESC NULLS LAST], false, 0
 
 (27) WindowGroupLimit
-Input [6]: [transaction_id#238, customer_id#248, amount#240, status#241, transaction_time#242, updated_at#243]
-Arguments: [transaction_id#238], [updated_at#243 DESC NULLS LAST], row_number(), 1, Final
+Input [6]: [transaction_id#151, customer_id#157, amount#153, status#154, transaction_time#155, updated_at#156]
+Arguments: [transaction_id#151], [updated_at#156 DESC NULLS LAST], row_number(), 1, Final
 
 (28) Window
-Input [6]: [transaction_id#238, customer_id#248, amount#240, status#241, transaction_time#242, updated_at#243]
-Arguments: [row_number() windowspecdefinition(transaction_id#238, updated_at#243 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rn#90], [transaction_id#238], [updated_at#243 DESC NULLS LAST]
+Input [6]: [transaction_id#151, customer_id#157, amount#153, status#154, transaction_time#155, updated_at#156]
+Arguments: [row_number() windowspecdefinition(transaction_id#151, updated_at#156 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rn#159], [transaction_id#151], [updated_at#156 DESC NULLS LAST]
 
 (29) Filter
-Input [7]: [transaction_id#238, customer_id#248, amount#240, status#241, transaction_time#242, updated_at#243, rn#90]
-Condition : ((rn#90 = 1) AND isnotnull(customer_id#248))
+Input [7]: [transaction_id#151, customer_id#157, amount#153, status#154, transaction_time#155, updated_at#156, rn#159]
+Condition : ((rn#159 = 1) AND isnotnull(customer_id#157))
 
 (30) Project
-Output [5]: [transaction_id#238, customer_id#248, amount#240, status#241, transaction_time#242]
-Input [7]: [transaction_id#238, customer_id#248, amount#240, status#241, transaction_time#242, updated_at#243, rn#90]
+Output [5]: [transaction_id#151, customer_id#157, amount#153, status#154, transaction_time#155]
+Input [7]: [transaction_id#151, customer_id#157, amount#153, status#154, transaction_time#155, updated_at#156, rn#159]
 
 (31) Scan csv 
-Output [2]: [customer_id#244, customer_name#245]
+Output [2]: [customer_id#160, customer_name#161]
 Batched: false
-Location: InMemoryFileIndex [file:/home/claude/spark_customer_txn/data/customers.csv]
+Location: InMemoryFileIndex [file:/C:/Users/Administrator/spark introduce learn/exercises/06-customer-transactions/data/customers.csv]
 PushedFilters: [IsNotNull(customer_name), IsNotNull(customer_id)]
 ReadSchema: struct<customer_id:string,customer_name:string>
 
 (32) Filter
-Input [2]: [customer_id#244, customer_name#245]
-Condition : (isnotnull(customer_name#245) AND isnotnull(customer_id#244))
+Input [2]: [customer_id#160, customer_name#161]
+Condition : (isnotnull(customer_name#161) AND isnotnull(customer_id#160))
 
 (33) Project
-Output [1]: [customer_id#244]
-Input [2]: [customer_id#244, customer_name#245]
+Output [1]: [customer_id#160]
+Input [2]: [customer_id#160, customer_name#161]
 
 (34) BroadcastExchange
-Input [1]: [customer_id#244]
-Arguments: HashedRelationBroadcastMode(List(input[0, string, true]),false), [plan_id=2253]
+Input [1]: [customer_id#160]
+Arguments: HashedRelationBroadcastMode(List(input[0, string, true]),false), [plan_id=2249]
 
 (35) BroadcastHashJoin
-Left keys [1]: [customer_id#248]
-Right keys [1]: [customer_id#244]
+Left keys [1]: [customer_id#157]
+Right keys [1]: [customer_id#160]
 Join type: Inner
 Join condition: None
 
 (36) Project
-Output [5]: [customer_id#248, transaction_id#238, amount#240, status#241, transaction_time#242]
-Input [6]: [transaction_id#238, customer_id#248, amount#240, status#241, transaction_time#242, customer_id#244]
+Output [5]: [customer_id#157, transaction_id#151, amount#153, status#154, transaction_time#155]
+Input [6]: [transaction_id#151, customer_id#157, amount#153, status#154, transaction_time#155, customer_id#160]
 
 (37) Sort
-Input [5]: [customer_id#248, transaction_id#238, amount#240, status#241, transaction_time#242]
-Arguments: [customer_id#248 ASC NULLS FIRST, transaction_time#242 DESC NULLS LAST], false, 0
+Input [5]: [customer_id#157, transaction_id#151, amount#153, status#154, transaction_time#155]
+Arguments: [customer_id#157 ASC NULLS FIRST, transaction_time#155 DESC NULLS LAST], false, 0
 
 (38) WindowGroupLimit
-Input [5]: [customer_id#248, transaction_id#238, amount#240, status#241, transaction_time#242]
-Arguments: [customer_id#248], [transaction_time#242 DESC NULLS LAST], row_number(), 1, Partial
+Input [5]: [customer_id#157, transaction_id#151, amount#153, status#154, transaction_time#155]
+Arguments: [customer_id#157], [transaction_time#155 DESC NULLS LAST], row_number(), 1, Partial
 
 (39) Exchange
-Input [5]: [customer_id#248, transaction_id#238, amount#240, status#241, transaction_time#242]
-Arguments: hashpartitioning(customer_id#248, 4), ENSURE_REQUIREMENTS, [plan_id=2260]
+Input [5]: [customer_id#157, transaction_id#151, amount#153, status#154, transaction_time#155]
+Arguments: hashpartitioning(customer_id#157, 4), ENSURE_REQUIREMENTS, [plan_id=2256]
 
 (40) Sort
-Input [5]: [customer_id#248, transaction_id#238, amount#240, status#241, transaction_time#242]
-Arguments: [customer_id#248 ASC NULLS FIRST, transaction_time#242 DESC NULLS LAST], false, 0
+Input [5]: [customer_id#157, transaction_id#151, amount#153, status#154, transaction_time#155]
+Arguments: [customer_id#157 ASC NULLS FIRST, transaction_time#155 DESC NULLS LAST], false, 0
 
 (41) WindowGroupLimit
-Input [5]: [customer_id#248, transaction_id#238, amount#240, status#241, transaction_time#242]
-Arguments: [customer_id#248], [transaction_time#242 DESC NULLS LAST], row_number(), 1, Final
+Input [5]: [customer_id#157, transaction_id#151, amount#153, status#154, transaction_time#155]
+Arguments: [customer_id#157], [transaction_time#155 DESC NULLS LAST], row_number(), 1, Final
 
 (42) Window
-Input [5]: [customer_id#248, transaction_id#238, amount#240, status#241, transaction_time#242]
-Arguments: [row_number() windowspecdefinition(customer_id#248, transaction_time#242 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS _we0#184], [customer_id#248], [transaction_time#242 DESC NULLS LAST]
+Input [5]: [customer_id#157, transaction_id#151, amount#153, status#154, transaction_time#155]
+Arguments: [row_number() windowspecdefinition(customer_id#157, transaction_time#155 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS _we0#125], [customer_id#157], [transaction_time#155 DESC NULLS LAST]
 
 (43) Filter
-Input [6]: [customer_id#248, transaction_id#238, amount#240, status#241, transaction_time#242, _we0#184]
-Condition : (_we0#184 = 1)
+Input [6]: [customer_id#157, transaction_id#151, amount#153, status#154, transaction_time#155, _we0#125]
+Condition : (_we0#125 = 1)
 
 (44) Project
-Output [5]: [customer_id#248, transaction_id#238 AS latest_transaction_id#195, transaction_time#242 AS latest_transaction_time#196, amount#240 AS latest_amount#197, status#241 AS latest_status#198]
-Input [6]: [customer_id#248, transaction_id#238, amount#240, status#241, transaction_time#242, _we0#184]
+Output [5]: [customer_id#157, transaction_id#151 AS latest_transaction_id#126, transaction_time#155 AS latest_transaction_time#127, amount#153 AS latest_amount#128, status#154 AS latest_status#129]
+Input [6]: [customer_id#157, transaction_id#151, amount#153, status#154, transaction_time#155, _we0#125]
 
 (45) BroadcastExchange
-Input [5]: [customer_id#248, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198]
-Arguments: HashedRelationBroadcastMode(List(input[0, string, true]),false), [plan_id=2267]
+Input [5]: [customer_id#157, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129]
+Arguments: HashedRelationBroadcastMode(List(input[0, string, true]),false), [plan_id=2263]
 
 (46) BroadcastHashJoin
-Left keys [1]: [customer_id#20]
-Right keys [1]: [customer_id#248]
+Left keys [1]: [customer_id#11]
+Right keys [1]: [customer_id#157]
 Join type: LeftOuter
 Join condition: None
 
 (47) Project
-Output [10]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198]
-Input [11]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L, customer_id#248, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198]
+Output [10]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129]
+Input [11]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L, customer_id#157, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129]
 
 (48) Sort
-Input [10]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198]
-Arguments: [province#2 ASC NULLS FIRST, total_amount#218 DESC NULLS LAST], false, 0
+Input [10]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129]
+Arguments: [province#2 ASC NULLS FIRST, total_amount#131 DESC NULLS LAST], false, 0
 
 (49) WindowGroupLimit
-Input [10]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198]
-Arguments: [province#2], [total_amount#218 DESC NULLS LAST], rank(total_amount#218), 3, Partial
+Input [10]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129]
+Arguments: [province#2], [total_amount#131 DESC NULLS LAST], rank(total_amount#131), 3, Partial
 
 (50) Exchange
-Input [10]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198]
-Arguments: hashpartitioning(province#2, 4), ENSURE_REQUIREMENTS, [plan_id=2274]
+Input [10]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129]
+Arguments: hashpartitioning(province#2, 4), ENSURE_REQUIREMENTS, [plan_id=2270]
 
 (51) Sort
-Input [10]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198]
-Arguments: [province#2 ASC NULLS FIRST, total_amount#218 DESC NULLS LAST], false, 0
+Input [10]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129]
+Arguments: [province#2 ASC NULLS FIRST, total_amount#131 DESC NULLS LAST], false, 0
 
 (52) WindowGroupLimit
-Input [10]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198]
-Arguments: [province#2], [total_amount#218 DESC NULLS LAST], rank(total_amount#218), 3, Final
+Input [10]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129]
+Arguments: [province#2], [total_amount#131 DESC NULLS LAST], rank(total_amount#131), 3, Final
 
 (53) Window
-Input [10]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198]
-Arguments: [rank(total_amount#218) windowspecdefinition(province#2, total_amount#218 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rank_in_province#329], [province#2], [total_amount#218 DESC NULLS LAST]
+Input [10]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129]
+Arguments: [rank(total_amount#131) windowspecdefinition(province#2, total_amount#131 DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rank_in_province#222], [province#2], [total_amount#131 DESC NULLS LAST]
 
 (54) Filter
-Input [11]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198, rank_in_province#329]
-Condition : (rank_in_province#329 <= 3)
+Input [11]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129, rank_in_province#222]
+Condition : (rank_in_province#222 <= 3)
 
 (55) Exchange
-Input [11]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198, rank_in_province#329]
-Arguments: rangepartitioning(province#2 ASC NULLS FIRST, rank_in_province#329 ASC NULLS FIRST, 4), ENSURE_REQUIREMENTS, [plan_id=2280]
+Input [11]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129, rank_in_province#222]
+Arguments: rangepartitioning(province#2 ASC NULLS FIRST, rank_in_province#222 ASC NULLS FIRST, 4), ENSURE_REQUIREMENTS, [plan_id=2276]
 
 (56) Sort
-Input [11]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198, rank_in_province#329]
-Arguments: [province#2 ASC NULLS FIRST, rank_in_province#329 ASC NULLS FIRST], true, 0
+Input [11]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129, rank_in_province#222]
+Arguments: [province#2 ASC NULLS FIRST, rank_in_province#222 ASC NULLS FIRST], true, 0
 
 (57) AdaptiveSparkPlan
-Output [11]: [customer_id#20, customer_name#1, province#2, total_transactions#216L, total_amount#218, success_transactions#220L, latest_transaction_id#195, latest_transaction_time#196, latest_amount#197, latest_status#198, rank_in_province#329]
+Output [11]: [customer_id#11, customer_name#1, province#2, total_transactions#130L, total_amount#131, success_transactions#132L, latest_transaction_id#126, latest_transaction_time#127, latest_amount#128, latest_status#129, rank_in_province#222]
 Arguments: isFinalPlan=false
 
 

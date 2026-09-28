@@ -1,8 +1,16 @@
 
 
 import os
+import sys
 import shutil
 import glob
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
+os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
+os.environ.setdefault("PYSPARK_DRIVER_PYTHON", sys.executable)
+
 from pyspark.sql import SparkSession, Window
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, DoubleType
@@ -73,7 +81,7 @@ print(f"orders.csv: {n_orders_raw} dòng | customers.csv: {n_customers} dòng")
 
 orders_clean = orders_raw \
     .withColumn("status", F.upper(F.trim(F.col("status")))) \
-    .withColumn("order_date_parsed", F.expr("try_to_date(order_date, 'yyyy-MM-dd')")) \
+    .withColumn("order_date_parsed", F.to_date(F.try_to_timestamp(F.col("order_date"), F.lit("yyyy-MM-dd")))) \
     .withColumn("updated_at_parsed", F.expr("try_to_timestamp(updated_at, 'yyyy-MM-dd HH:mm:ss')"))
 
 print("\nSố dòng null/lỗi theo từng tiêu chí kiểm tra:")
