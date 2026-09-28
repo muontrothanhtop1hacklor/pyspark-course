@@ -103,7 +103,7 @@ def main():
     print("YÊU CẦU 5: WRITE PARQUET (BATCH VS STREAMING) & CHECKPOINT AUDIT")
     print("=" * 70)
 
-    # Dọn dẹp output và stream input
+    # Khởi tạo lại các thư mục để bảo đảm tính độc lập của lần kiểm tra
     reset_dir(BATCH_PARQUET_DIR)
     reset_dir(STREAM_PARQUET_DIR)
     reset_dir(STREAM_INPUT_WRITE_DIR)
@@ -120,9 +120,6 @@ def main():
     )
     spark.sparkContext.setLogLevel("ERROR")
 
-    # -------------------------------------------------------------
-    # 1. BATCH WRITE TO PARQUET
-    # -------------------------------------------------------------
     print("\n[BƯỚC 1] BATCH: Đọc từ batch_input, clean dữ liệu và ghi Parquet...")
     batch_raw = (
         spark.read

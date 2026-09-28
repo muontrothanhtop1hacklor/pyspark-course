@@ -84,10 +84,10 @@ Khai báo `StructType` riêng cho `orders` (7 cột, `amount: DoubleType`, `orde
 
 | Kiểm tra | Trước ghi | Sau đọc lại | Khớp? |
 |---|---|---|---|
-| Count `valid_orders` | 2.580 | 2.580 | ✅ |
-| Schema | 10 cột (bao gồm `order_date: date` sau parse, `order_level`, `customer_name`, `customer_type`) | giống hệt | ✅ |
-| Tổng `amount` | 25,992,710,230.00 | 25,992,710,230.00 | ✅ |
-| Count `province_report` | 6 dòng | 6 dòng | ✅ |
+| Count `valid_orders` | 2.580 | 2.580 | Khớp |
+| Schema | 10 cột (bao gồm `order_date: date` sau parse, `order_level`, `customer_name`, `customer_type`) | giống hệt | Khớp |
+| Tổng `amount` | 25,992,710,230.00 | 25,992,710,230.00 | Khớp |
+| Count `province_report` | 6 dòng | 6 dòng | Khớp |
 
 ---
 

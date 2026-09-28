@@ -75,7 +75,7 @@ def main():
     print("YÊU CẦU 2: STRUCTURED STREAMING VỚI COMPLETE MODE")
     print("=" * 70)
 
-    # Dọn dẹp stream_input và checkpoint cũ
+    # Xóa checkpoint cũ để bài thực hành luôn tính toán từ đầu mà không bị ảnh hưởng bởi các lần chạy trước
     if os.path.exists(STREAM_INPUT_DIR):
         shutil.rmtree(STREAM_INPUT_DIR)
     os.makedirs(STREAM_INPUT_DIR, exist_ok=True)
@@ -95,11 +95,9 @@ def main():
     )
     spark.sparkContext.setLogLevel("ERROR")
 
-    # Đăng ký listener để theo dõi micro-batch
     listener = MicroBatchProgressLogger()
     spark.streams.addListener(listener)
 
-    # 1. Khai báo schema giống yêu cầu 1
     schema = StructType([
         StructField("order_id", StringType(), True),
         StructField("customer_id", StringType(), True),
@@ -110,8 +108,7 @@ def main():
         StructField("updated_at", StringType(), True),
     ])
 
-    # 2. Đọc stream với maxFilesPerTrigger = 1
-    print(f"\n[1] Khởi tạo readStream từ thư mục: {STREAM_INPUT_DIR}")
+    # Giới hạn mỗi micro-batch đúng 1 file để quan sát sự thay đổi trạng thái tích lũy qua từng đợt
     raw_stream = (
         spark.readStream
         .format("csv")
@@ -121,7 +118,6 @@ def main():
         .load(STREAM_INPUT_DIR)
     )
 
-    # 3. Clean và đánh dấu dòng hợp lệ giống hệt batch
     cleaned_stream = (
         raw_stream
         .withColumn("status_clean", F.upper(F.trim(F.col("status"))))
@@ -134,7 +130,6 @@ def main():
 
     valid_stream = cleaned_stream.filter(F.col("is_valid"))
 
-    # 4. Aggregation theo province
     agg_stream = (
         valid_stream
         .groupBy("province")

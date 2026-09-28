@@ -46,7 +46,7 @@ def main():
     print("YÊU CẦU 1: BATCH PROCESSING & TỔNG HỢP THEO TỈNH THÀNH")
     print("=" * 70)
 
-    # 1. Khai báo schema tường minh
+    # Khai báo StringType để không làm mất các bản ghi sai định dạng trước khi phân loại lỗi
     schema = StructType([
         StructField("order_id", StringType(), True),
         StructField("customer_id", StringType(), True),
@@ -57,8 +57,6 @@ def main():
         StructField("updated_at", StringType(), True),
     ])
 
-    # 2. Đọc toàn bộ thư mục batch_input
-    print(f"\n[1] Đọc dữ liệu từ thư mục: {BATCH_INPUT_DIR}")
     raw_df = (
         spark.read
         .format("csv")
@@ -70,10 +68,7 @@ def main():
     total_rows = raw_df.count()
     print(f"-> Tổng số dòng đọc được từ batch_input: {total_rows}")
 
-    # 3. Chuẩn hoá và đánh dấu hợp lệ
-    # - status -> UPPERCASE
-    # - amount -> cast sang Double
-    # - order_date -> parse date yyyy-MM-dd
+    # try_cast và try_to_timestamp trả về NULL cho dữ liệu sai thay vì ném lỗi dừng job
     cleaned_df = (
         raw_df
         .withColumn("status_clean", F.upper(F.trim(F.col("status"))))

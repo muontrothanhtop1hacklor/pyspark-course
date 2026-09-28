@@ -126,20 +126,22 @@ $dir = ".\exercises\02-orders-lakehouse"
 - [08 – Advanced Read/Write & Validation](./exercises/08-read-write-advance/README.md)
 - [09 – Full End-to-End ETL Pipeline](./exercises/09-full-etl-pipeline/README.md)
 - [10 – UDF, Pandas UDF & UDTF Benchmark](./exercises/10-udf-pandas-udtf/README.md)
+- [11 – Batch vs Structured Streaming](./exercises/11-batch-vs-streaming/README.md)
 
 ---
 
 ## 7. Nhật ký tiến độ học tập
 
-- **07/09 – Nền tảng Data Lakehouse:** Tìm hiểu Data Lake vs Warehouse vs Lakehouse, Ingest, Bronze/Silver/Gold, ETL/ELT, MinIO, Nessie, Iceberg, Apache Spark.
-- **09/09 – Đọc/Ghi dữ liệu cơ bản:** Chuẩn bị dataset CSV/JSON và hoàn thiện bài `00-read-write-basics`.
-- **10/09 – Làm sạch và tổng hợp:** Thực hành làm sạch (`00b`), xây dựng bài toán orders aggregation với DataFrame API và Spark SQL (`01`).
-- **11/09 – Lakehouse đa nguồn & Airflow:** Xây dựng pipeline Bronze → Silver → Gold cho 3 nguồn Web/Mobile/Store, tích hợp MinIO S3 và điều phối bằng Airflow DAG (`02`, `03`).
-- **21/09 – Kiểu dữ liệu & Schema Control:** Hoàn thành bài `04-data-types`, làm chủ StructType thủ công, ép kiểu tiền tệ `Decimal` và kiểm soát ANSI mode.
-- **22/09 – Phép Join & Quản lý dữ liệu mồ côi:** Hoàn thành bài `05-joins`, so sánh Inner vs Left join, cô lập bản ghi unmapped để đối soát nghiệp vụ.
-- **23/09 – Deduplication & Window Functions:** Hoàn thành bài `06-customer-transactions`, khử duplicate bằng `row_number()`, xếp hạng Top-3 bằng `rank()` theo tỉnh, đối soát reconciliation 100% khớp.
-- **24/09 – Partitioning & Performance:** Hoàn thành bài `07-partitioning-performance`, đo lường thực nghiệm `repartition` vs `coalesce` vs `partitionBy`, phân tích hiện tượng hash collision và data skew.
-- **25/09 – Nâng cao Read/Write & Quarantine:** Hoàn thành bài `08-read-write-advance`, bắt lỗi định dạng ngày (`try_to_date`), phân loại lỗi `error_reason`, kiểm soát write modes.
-- **26/09 – Full ETL Pipeline:** Hoàn thành bài `09-full-etl-pipeline`, tích hợp toàn bộ các kỹ thuật thành một quy trình ETL 10 bước hoàn chỉnh chuẩn sản xuất.
-- **27/09 – UDF & Vectorized Execution:** Hoàn thành bài `10-udf-pandas-udtf`, benchmark trên 1.000.000 dòng giữa Python UDF (9.21s), Built-in function (3.98s), Pandas UDF vector hóa và UDTF đa dòng.
-- **28/09 – Chuẩn hóa cấu trúc Repository:** Tái cấu trúc toàn bộ thư mục `exercises/` theo chuẩn kebab-case đánh số thống nhất từ 00 đến 10, bổ sung đầy đủ script và tài liệu cho từng bài.
+- 07/09 – Nền tảng Data Lakehouse: Tìm hiểu Data Lake vs Warehouse vs Lakehouse, Ingest, Bronze/Silver/Gold, ETL/ELT, MinIO, Nessie, Iceberg, Apache Spark.
+- 09/09 – Đọc và ghi dữ liệu cơ bản: Chuẩn bị dataset CSV/JSON và hoàn thiện bài `00-read-write-basics`.
+- 10/09 – Làm sạch và tổng hợp: Thực hành làm sạch (`00b`), xây dựng bài toán orders aggregation với DataFrame API và Spark SQL (`01`).
+- 11/09 – Lakehouse đa nguồn và Airflow: Xây dựng pipeline Bronze, Silver, Gold cho 3 nguồn Web, Mobile, Store, tích hợp MinIO S3 và điều phối bằng Airflow DAG (`02`, `03`).
+- 21/09 – Kiểu dữ liệu và Schema Control: Hoàn thành bài `04-data-types`, StructType thủ công, ép kiểu tiền tệ Decimal và kiểm soát ANSI mode.
+- 22/09 – Phép Join và quản lý dữ liệu mồ côi: Hoàn thành bài `05-joins`, so sánh Inner và Left join, cô lập bản ghi unmapped để đối soát nghiệp vụ.
+- 23/09 – Deduplication và Window Functions: Hoàn thành bài `06-customer-transactions`, khử duplicate bằng `row_number()`, xếp hạng Top-3 bằng `rank()` theo tỉnh.
+- 24/09 – Partitioning và Performance: Hoàn thành bài `07-partitioning-performance`, đo lường thực nghiệm `repartition`, `coalesce`, `partitionBy`, phân tích hiện tượng hash collision và data skew.
+- 25/09 – Nâng cao Read/Write và Quarantine: Hoàn thành bài `08-read-write-advance`, xử lý định dạng ngày, phân loại lỗi `error_reason`, kiểm soát write modes.
+- 26/09 – Full ETL Pipeline: Hoàn thành bài `09-full-etl-pipeline`, tích hợp các kỹ thuật thành quy trình ETL 10 bước hoàn chỉnh.
+- 27/09 – UDF và Vectorized Execution: Hoàn thành bài `10-udf-pandas-udtf`, benchmark trên 1.000.000 dòng giữa Python UDF, Built-in function, Pandas UDF vector hóa và UDTF.
+- 28/09 – Chuẩn hóa cấu trúc Repository: Tái cấu trúc thư mục `exercises/` theo chuẩn kebab-case đánh số thống nhất từ 00 đến 10.
+- 28/09 – Structured Streaming: Hoàn thành bài `11-batch-vs-streaming`, đối chiếu Batch và Streaming, micro-batch, thử nghiệm lỗi, checkpoint và audit parity.

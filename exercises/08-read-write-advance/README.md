@@ -99,10 +99,10 @@ Sau bước [3], kiểm tra riêng 3 order mới (`order_id >= 90001`): **0 dòn
 
 | Kiểm tra | Trước khi ghi | Sau khi đọc lại Parquet | Khớp? |
 |---|---|---|---|
-| Schema | 6 cột đúng kiểu đã khai báo | **giống hệt** (Parquet lưu kèm schema, không cần khai báo lại khi đọc) | ✅ |
-| Total count | 1.734 | 1.734 | ✅ |
-| Count theo tỉnh | (6 tỉnh) | **giống hệt**, 0 dòng lệch khi đối chiếu bằng `exceptAll` 2 chiều | ✅ |
-| Tổng `amount` theo tỉnh | vd HaNoi: 731,855,528 | HaNoi: 731,855,528 | ✅ — lệch lớn nhất đo được: **0.0** |
+| Schema | 6 cột đúng kiểu đã khai báo | giống hệt (Parquet lưu kèm schema, không cần khai báo lại khi đọc) | Khớp |
+| Total count | 1.734 | 1.734 | Khớp |
+| Count theo tỉnh | (6 tỉnh) | giống hệt, 0 dòng lệch khi đối chiếu bằng `exceptAll` 2 chiều | Khớp |
+| Tổng `amount` theo tỉnh | vd HaNoi: 731,855,528 | HaNoi: 731,855,528 | Khớp — lệch lớn nhất đo được: 0.0 |
 
 Toàn bộ số liệu khớp tuyệt đối giữa trước khi ghi và sau khi đọc lại — đúng như kỳ vọng vì Parquet là định dạng **lưu kèm schema và không mất mát dữ liệu** (columnar, có nén nhưng không suy hao số liệu).
 
