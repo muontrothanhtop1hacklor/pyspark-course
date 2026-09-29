@@ -43,6 +43,13 @@ services:
     depends_on:
       - minio-init
 
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    restart: unless-stopped
+
   airflow-init:
     build:
       context: .

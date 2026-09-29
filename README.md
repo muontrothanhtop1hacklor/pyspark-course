@@ -40,7 +40,8 @@ pyspark-course/
 │   ├── 08-read-write-advance/            ← Schema tự khai báo, quarantine lỗi, write modes
 │   ├── 09-full-etl-pipeline/             ← Flow PySpark hoàn chỉnh 10 bước khép kín
 │   ├── 10-udf-pandas-udtf/               ← Benchmark 1M dòng: UDF vs Pandas UDF vs Built-in
-│   └── 11-batch-vs-streaming/            ← Đối chiếu Batch vs Structured Streaming (micro-batch, checkpoint)
+│   ├── 11-batch-vs-streaming/            ← Đối chiếu Batch vs Structured Streaming (micro-batch, checkpoint)
+│   └── 12-kafka-basics/                  ← Kafka KRaft Docker, Topic, Partition, Offset, Consumer Group
 ├── logs/                                 ← Mẫu nhật ký học tập theo từng buổi
 └── README.md
 ```
@@ -64,6 +65,7 @@ pyspark-course/
 | **09** | [`09-full-etl-pipeline`](./exercises/09-full-etl-pipeline/README.md) | Full Flow: read → clean → validate → dedup → join → aggregate → write | `orders_dup.csv` (3.15k dòng) |
 | **10** | [`10-udf-pandas-udtf`](./exercises/10-udf-pandas-udtf/README.md) | So sánh hiệu năng UDF vs Built-in vs Pandas UDF vs UDTF | `customers_1m.csv` (1M dòng) |
 | **11** | [`11-batch-vs-streaming`](./exercises/11-batch-vs-streaming/README.md) | Đối chiếu Batch vs Structured Streaming, micro-batch, checkpoint & audit | `orders_{1,2,3}.csv` (30 dòng) |
+| **12** | [`12-kafka-basics`](./exercises/12-kafka-basics/README.md) | Kafka KRaft Docker, Topic 3 partitions, Producer 30 JSON msgs, Consumer Group & Lag | `orders_stream` (30 message stream) |
 
 ---
 
