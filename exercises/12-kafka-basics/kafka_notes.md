@@ -356,3 +356,374 @@ test_group_rebalance orders_stream   2          13              13              
 - **Dự đoán:** Khi Apache Spark (Structured Streaming / RDD) đọc topic `orders_stream` có 3 partition:
   - Một **Kafka Partition** sẽ ánh xạ tương ứng thành **một Spark Partition (hoặc một Task xử lý tính toán)** trong mỗi micro-batch.
   - Do topic có 3 partition, Spark sẽ phân bổ tối đa **3 Tasks chạy song song** trên các Core của Spark Executor để kéo dữ liệu từ 3 partition tương ứng về bộ nhớ xử lý.
+
+---
+---
+
+# Báo cáo thực hành (Ngày 3): Spark Đọc Kafka (Structured Streaming)
+
+Báo cáo chi tiết quá trình tích hợp Apache Spark Structured Streaming với cụm Kafka KRaft: Đọc luồng dữ liệu thô, Parse JSON và xử lý lỗi cú pháp theo mẫu Dead Letter Queue (DLQ), làm sạch dữ liệu, Join luồng với bảng tĩnh `customers.csv` (Stream-Static Join) và 3 thử nghiệm quan sát hành vi runtime.
+
+---
+
+## 8. Chuẩn Bị Môi Trường & Thiết Lập Gói Thư Viện
+
+### 8.1. Kiểm tra Kafka Broker & Topic
+- **Trạng thái Broker:** Container Docker `kafka` (image `apache/kafka:latest`, KRaft mode) đang chạy ổn định tại `localhost:9092`.
+- **Topic kiểm thử:** `orders_stream` gồm 3 partitions (`0`, `1`, `2`) đã được nạp sẵn hơn 70 messages từ đợt thực hành Ngày 2:
+  ```powershell
+  docker exec kafka /opt/kafka/bin/kafka-get-offsets.sh --bootstrap-server localhost:9092 --topic orders_stream
+  # Kết quả:
+  # orders_stream:0:32
+  # orders_stream:1:22
+  # orders_stream:2:24
+  ```
+
+### 8.2. Xác định và nạp gói `spark-sql-kafka`
+- **Phiên bản hệ thống:**
+  - Python: 3.12 (Conda env `pyspark_env`)
+  - Apache Spark: **4.0.1**
+  - Scala build: **2.13.16**
+- **Maven Coordinate tương ứng:**
+  Gói Kafka connector phải khớp chính xác phiên bản Spark và Scala:
+  $$\text{Package: } \mathbf{org.apache.spark:spark-sql-kafka-0-10\_2.13:4.0.1}$$
+- **Cấu hình SparkSession tối ưu trên Windows:**
+  ```python
+  spark = (
+      SparkSession.builder
+      .appName("Spark_Kafka_Lab_13")
+      .master("local[2]")
+      .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1")
+      .config("spark.driver.host", "127.0.0.1")
+      .config("spark.driver.bindAddress", "127.0.0.1")
+      .config("spark.sql.shuffle.partitions", "2")
+      .config("spark.sql.ansi.enabled", "false")
+      .getOrCreate()
+  )
+  ```
+  *(Lưu ý kỹ thuật: Trên Windows, cần cấu hình đồng bộ cả `spark.driver.host` và `spark.driver.bindAddress` về `127.0.0.1` để tránh lỗi Netty BlockManager không thể phân giải hostname).*
+
+### 8.3. Chuẩn bị bảng danh mục tĩnh `customers.csv`
+Tạo file [customers.csv](file:///c:/Users/Administrator/spark%20introduce%20learn/exercises/13-spark-kafka/customers.csv) phục vụ Yêu cầu 3 với 3 cột (`customer_id`, `customer_name`, `customer_type`):
+```csv
+customer_id,customer_name,customer_type
+C001,Nguyen Van A,VIP
+C002,Tran Thi B,REGULAR
+C003,Le Van C,VIP
+C004,Pham Thi D,REGULAR
+C005,Hoang Van E,NEW
+C006,Vu Thi F,REGULAR
+C007,Dang Van G,VIP
+C008,Bui Thi H,NEW
+C009,Do Van I,REGULAR
+C010,Ngo Thi K,VIP
+```
+*(Ghi chú: Khách hàng `C999` có trong đơn hàng nhưng cố tình không đưa vào danh mục để kiểm thử trường hợp unmapped).*
+
+---
+
+## 9. Yêu Cầu 1 – Đọc Thô Từ Kafka (Raw Stream)
+
+### 9.1. Cấu hình đọc Stream
+Sử dụng API `spark.readStream` với format `kafka`:
+```python
+kafka_raw_df = (
+    spark.readStream
+    .format("kafka")
+    .option("kafka.bootstrap.servers", "127.0.0.1:9092")
+    .option("subscribe", "orders_stream")
+    .option("startingOffsets", starting_offset) # "earliest" hoặc "latest"
+    .load()
+)
+```
+
+Schema mặc định do Kafka Source cung cấp gồm các cột nhị phân và siêu dữ liệu:
+- `key`: `binary`
+- `value`: `binary`
+- `topic`: `string`
+- `partition`: `integer`
+- `offset`: `long`
+- `timestamp`: `timestamp`
+- `timestampType`: `integer`
+
+Trích xuất 6 trường chính theo yêu cầu đề bài:
+```python
+display_df = kafka_raw_df.select(
+    F.col("key").cast("string").alias("key"),
+    F.col("value").cast("string").alias("value"),
+    F.col("topic"),
+    F.col("partition"),
+    F.col("offset"),
+    F.col("timestamp")
+)
+```
+
+### 9.2. So sánh thực nghiệm `startingOffsets`: `earliest` vs `latest`
+
+#### Kịch bản 1: `startingOffsets = "earliest"`
+- **Log thực tế nhận được (Micro-Batch 0):**
+```text
+-------------------------------------------
+Batch: 0
+-------------------------------------------
++---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------+---------+------+-----------------------+
+|key            |value                                                                                                                                                                          |topic        |partition|offset|timestamp              |
++---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------+---------+------+-----------------------+
+|1006           |{"order_id": "1006", "customer_id": "C005", "province": "HaiPhong", "amount": 1200000.0, "status": "Shipping", "order_date": "2025-01-10", "updated_at": "2025-01-10 15:30:00"}|orders_stream|2        |1     |2026-09-29 09:40:09.239|
+|NULL           |INVALID_RAW_STRING_MESSAGE_1_NOT_A_JSON                                                                                                                                        |orders_stream|2        |2     |2026-09-29 09:40:09.249|
+|1013           |{"order_id": "1013", "customer_id": "C004", "province": "CanTho", "amount": 1100000.0, "status": "pending", "order_date": "2025-01-18", "updated_at": "2025-01-18 13:45:00"}   |orders_stream|2        |3     |2026-09-29 09:40:11.269|
+|1019           |{"order_id": "1019", "customer_id": "C001", "province": "HaNoi", "amount": 2700000.0, "status": "SUCCESS", "order_date": "2025-01-24", "updated_at": "2025-01-24 19:50:00"}    |orders_stream|2        |4     |2026-09-29 09:40:11.288|
+|1023           |{"order_id": "1023", "customer_id": "C010", "province": "HaNoi", "amount": 3500000.0, "status": "COMPLETED", "order_date": "", "updated_at": "2025-01-29 13:50:00"}            |orders_stream|2        |5     |2026-09-29 09:40:13.299|
+|1024           |{"order_id": "1024", "customer_id": "C004", "province": "HoChiMinh", "amount": 1900000.0, "status": "SUCCESS", "order_date": "2025-01-30", "updated_at": "2025-01-30 14:20:00"}|orders_stream|2        |6     |2026-09-29 09:40:13.306|
+|1025           |{"order_id": "1025", "customer_id": "C005", "province": "DaNang", "amount": 0.0, "status": "CANCELLED", "order_date": "2025-01-31", "updated_at": "2025-01-31 15:10:00"}       |orders_stream|2        |7     |2026-09-29 09:40:13.309|
++---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------+---------+------+-----------------------+
+```
+- **Hiện tượng:** Spark quét từ Offset `0` của tất cả các Partition. Toàn bộ 70+ message lịch sử lưu trong Kafka từ các đợt chạy trước được nạp đầy đủ ngay tại Batch 0.
+
+#### Kịch bản 2: `startingOffsets = "latest"`
+- **Log thực tế nhận được (Micro-Batch 0):**
+```text
+-------------------------------------------
+Batch: 0
+-------------------------------------------
++---+-----+-----+---------+------+---------+
+|key|value|topic|partition|offset|timestamp|
++---+-----+-----+---------+------+---------+
++---+-----+-----+---------+------+---------+
+```
+- **Hiện tượng:** Batch 0 hoàn toàn rỗng (`0 rows`). Spark đặt con trỏ đọc tại Offset hiện thời cuối cùng (`Log-End-Offset`) của từng partition, bỏ qua toàn bộ dữ liệu lịch sử và chỉ chờ message mới phát sinh sau khi job khởi động.
+
+---
+
+## 10. Yêu Cầu 2 – Parse Dữ Liệu & Data Cleaning (Dead Letter Queue)
+
+### 10.1. Schema định nghĩa & Hàm `from_json`
+Khai báo cấu trúc Schema tương ứng payload đơn hàng:
+```python
+order_json_schema = StructType([
+    StructField("order_id", StringType(), True),
+    StructField("customer_id", StringType(), True),
+    StructField("province", StringType(), True),
+    StructField("amount", StringType(), True),
+    StructField("status", StringType(), True),
+    StructField("order_date", StringType(), True),
+    StructField("updated_at", StringType(), True)
+])
+```
+
+### 10.2. Cơ chế bảo tồn dòng lỗi (Không để mất mát dữ liệu)
+Khi gặp các message sai cú pháp (như chuỗi thô `INVALID_RAW_STRING_MESSAGE_1_NOT_A_JSON` hoặc cú pháp JSON vỡ `'{"order_id": 9999, "broken_json": unclosed_string_error'`), hàm `from_json` của Spark sẽ parse ra Struct rỗng có các trường con mang giá trị `NULL`.
+- **Giải pháp bảo toàn dữ liệu (Dead Letter Queue):**
+  1. Giữ nguyên chuỗi gốc `value_str` dưới tên cột `raw_value`.
+  2. Gắn cờ kiểm tra `is_valid_json = F.col("parsed.order_id").isNotNull()`.
+  3. Phân loại mã lỗi `error_reason = MALFORMED_JSON` cho các dòng không parse được để chuyển vào luồng cảnh báo/DLQ mà không loại bỏ khỏi DataFrame.
+
+```python
+parsed_df = (
+    kafka_df
+    .withColumn("value_str", F.col("value").cast(StringType()))
+    .withColumn("parsed", F.from_json(F.col("value_str"), order_json_schema))
+    .withColumn("is_valid_json", F.col("parsed.order_id").isNotNull())
+    .select(
+        F.col("parsed.order_id").alias("order_id"),
+        F.col("parsed.customer_id").alias("customer_id"),
+        F.col("parsed.province").alias("province"),
+        F.col("parsed.amount").alias("amount_raw"),
+        F.col("parsed.status").alias("status_raw"),
+        F.col("parsed.order_date").alias("order_date_raw"),
+        F.col("parsed.updated_at").alias("updated_at"),
+        F.col("is_valid_json"),
+        F.col("value_str").alias("raw_value")
+    )
+)
+```
+
+### 10.3. Các bước Clean dữ liệu
+Áp dụng các chuẩn hóa từ bài Batch/Streaming trước:
+1. **Chuẩn hóa status:**
+   ```python
+   .withColumn("status_clean", F.when(F.col("status_raw").isNotNull(), F.upper(F.trim(F.col("status_raw")))).otherwise(None))
+   ```
+2. **Cast amount sang Double:**
+   ```python
+   .withColumn("amount_clean", F.expr("try_cast(amount_raw AS DOUBLE)"))
+   ```
+3. **Parse order_date:**
+   ```python
+   .withColumn("order_date_clean", F.to_date(F.try_to_timestamp(F.col("order_date_raw"), F.lit("yyyy-MM-dd"))))
+   ```
+   *(Sử dụng `try_to_timestamp` bọc ngoài `to_date` để triệt tiêu ngoại lệ khi gặp ngày sai cú pháp như `"31/02/2025"`, `"2025-13-40"` hoặc chuỗi rỗng `""`)*.
+4. **Phân loại trạng thái bản ghi:**
+   - `CLEAN_RECORD`: Hợp lệ toàn bộ.
+   - `MALFORMED_JSON`: Lỗi cú pháp JSON.
+   - `INVALID_AMOUNT`: Giá trị amount null hoặc $\le 0$.
+   - `INVALID_DATE`: Ngày đặt hàng sai định dạng.
+
+- **Bảng kết quả console thực tế:**
+```text
++--------+-----------+---------+------------+------------+----------------+-------------+-----------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|order_id|customer_id|province |amount_clean|status_clean|order_date_clean|is_valid_json|error_reason           |raw_value                                                                                                                                                                      |
++--------+-----------+---------+------------+------------+----------------+-------------+-----------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|1005    |C001       |HaNoi    |0.0         |SUCCESS     |2025-01-09      |true         |INVALID_AMOUNT         |{"order_id": "1005", "customer_id": "C001", "province": "HaNoi", "amount": 0.0, "status": "SUCCESS", "order_date": "2025-01-09", "updated_at": "2025-01-09 14:00:00"}          |
+|1006    |C005       |HaiPhong |1200000.0   |SHIPPING    |2025-01-10      |true         |CLEAN_RECORD           |{"order_id": "1006", "customer_id": "C005", "province": "HaiPhong", "amount": 1200000.0, "status": "Shipping", "order_date": "2025-01-10", "updated_at": "2025-01-10 15:30:00"}|
+|NULL    |NULL       |NULL     |NULL        |NULL        |NULL            |false        |MALFORMED_JSON         |INVALID_RAW_STRING_MESSAGE_1_NOT_A_JSON                                                                                                                                        |
+|1013    |C004       |CanTho   |1100000.0   |PENDING     |2025-01-18      |true         |CLEAN_RECORD           |{"order_id": "1013", "customer_id": "C004", "province": "CanTho", "amount": 1100000.0, "status": "pending", "order_date": "2025-01-18", "updated_at": "2025-01-18 13:45:00"}   |
+|1023    |C010       |HaNoi    |3500000.0   |COMPLETED   |NULL            |true         |INVALID_DATE           |{"order_id": "1023", "customer_id": "C010", "province": "HaNoi", "amount": 3500000.0, "status": "COMPLETED", "order_date": "", "updated_at": "2025-01-29 13:50:00"}            |
+|1025    |C005       |DaNang   |0.0         |CANCELLED   |2025-01-31      |true         |INVALID_AMOUNT         |{"order_id": "1025", "customer_id": "C005", "province": "DaNang", "amount": 0.0, "status": "CANCELLED", "order_date": "2025-01-31", "updated_at": "2025-01-31 15:10:00"}       |
++--------+-----------+---------+------------+------------+----------------+-------------+-----------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+```
+
+---
+
+## 11. Yêu Cầu 3 – Join Với Dữ Liệu Tĩnh (Stream-Static Join)
+
+### 11.1. Bản chất của Stream-Static Join
+- Bảng tĩnh `customers.csv` được nạp qua `spark.read` (Batch DataFrame không có streaming source).
+- Luồng `orders` được đọc qua `spark.readStream`.
+- Trong Structured Streaming, khi join một Streaming DataFrame với một Batch DataFrame, Spark tự động tối ưu hóa thành **Stream-Static Join (thường dùng Broadcast Hash Join)**: Bảng tĩnh được phát (broadcast) tới các executor; ở mỗi micro-batch, các record của luồng stream sẽ tra cứu trực tiếp vào bảng tĩnh trong bộ nhớ.
+
+```python
+# 1. Đọc static DataFrame
+customers_df = spark.read.format("csv").option("header", "true").schema(customer_schema).load("customers.csv")
+
+# 2. Left join Stream orders với Static customers
+enriched_stream = (
+    parsed_orders
+    .join(customers_df, on="customer_id", how="left")
+    .withColumn("is_customer_matched", F.col("customer_name").isNotNull())
+)
+```
+
+### 11.2. Nhận diện các đơn hàng không map được khách hàng
+- **Kết quả hiển thị console:**
+```text
++--------+-----------+-------------+-------------+-------------------+---------+------------+------------+----------------+
+|order_id|customer_id|customer_name|customer_type|is_customer_matched|province |amount_clean|status_clean|order_date_clean|
++--------+-----------+-------------+-------------+-------------------+---------+------------+------------+----------------+
+|1005    |C001       |Nguyen Van A |VIP          |true               |HaNoi    |0.0         |SUCCESS     |2025-01-09      |
+|1006    |C005       |Hoang Van E  |NEW          |true               |HaiPhong |1200000.0   |SHIPPING    |2025-01-10      |
+|NULL    |NULL       |NULL         |NULL         |false              |NULL     |NULL        |NULL        |NULL            |
+|1013    |C004       |Pham Thi D   |REGULAR      |true               |CanTho   |1100000.0   |PENDING     |2025-01-18      |
+|1017    |C999       |NULL         |NULL         |false              |DaNang   |2200000.0   |SUCCESS     |2025-01-22      |
+|1019    |C001       |Nguyen Van A |VIP          |true               |HaNoi    |2700000.0   |SUCCESS     |2025-01-24      |
+|1023    |C010       |Ngo Thi K    |VIP          |true               |HaNoi    |3500000.0   |COMPLETED   |NULL            |
++--------+-----------+-------------+-------------+-------------------+---------+------------+------------+----------------+
+```
+- **Nhận xét:**
+  - Các order hợp lệ (`C001` $\to$ `C010`) được ghép thành công với `customer_name` và phân loại hạng khách hàng (`customer_type`: `VIP`, `REGULAR`, `NEW`), `is_customer_matched = true`.
+  - Đơn hàng `1017` mang `customer_id = 'C999'` không có trong danh mục khách hàng: Sau Left Join, các cột `customer_name` và `customer_type` mang giá trị `NULL`, cờ `is_customer_matched = false`.
+  - Các dòng bị lỗi cú pháp JSON: `customer_id` bị null nên cũng không map được khách hàng.
+
+---
+
+## 12. Yêu Cầu 4 – Các Thử Nghiệm Quan Sát & Đo Lường
+
+### 12.1. Thử nghiệm 1: Gửi thêm message trong lúc streaming job đang chạy
+- **Kịch bản:** Job Spark đang chạy với `startingOffsets="latest"` và `trigger(processingTime="3 seconds")`. Sau khi Batch 0 hoàn tất rỗng, tiến trình ngầm dùng `KafkaProducer` gửi 3 đơn hàng mới: `2001`, `2002`, `2003`.
+- **Log thực tế nhận được:**
+```text
+[PRODUCER] Gửi 3 message (Live Streaming Orders 2001, 2002, 2003) vào Kafka topic 'orders_stream'...
+[PRODUCER] Đã gửi thành công 3 message.
+
+-------------------------------------------
+Batch: 1
+-------------------------------------------
++----+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------+------+-----------------------+
+|key |value                                                                                                                                                                            |partition|offset|timestamp              |
++----+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------+------+-----------------------+
+|2003|{"order_id": "2003", "customer_id": "C999", "province": "DaNang", "amount": 550000.0, "status": "PENDING", "order_date": "2025-02-10", "updated_at": "2025-02-10 10:02:00"}      |2        |22    |2026-09-30 10:21:07.067|
+|2001|{"order_id": "2001", "customer_id": "C001", "province": "HaNoi", "amount": 999000.0, "status": "SUCCESS", "order_date": "2025-02-10", "updated_at": "2025-02-10 10:00:00"}       |0        |30    |2026-09-30 10:21:07.067|
+|2002|{"order_id": "2002", "customer_id": "C002", "province": "HoChiMinh", "amount": 1250000.0, "status": "COMPLETED", "order_date": "2025-02-10", "updated_at": "2025-02-10 10:01:00"}|0        |31    |2026-09-30 10:21:07.067|
++----+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------+------+-----------------------+
+```
+- **Hiện tượng:** Ngay chu kỳ trigger tiếp theo (Batch 1), Spark phát hiện offset mới trong Kafka và tự động kéo chính xác 3 message vừa gửi về xử lý.
+
+### 12.2. Thử nghiệm 2: Dừng job, gửi thêm message, chạy lại với `startingOffsets="latest"`
+- **Kịch bản:** Dừng hoàn toàn Spark streaming query. Trong lúc job đang tắt, gửi 2 message offline: `3001` và `3002`. Sau đó khởi động lại job mới với `startingOffsets="latest"`.
+- **Log thực tế nhận được:**
+```text
+[PRODUCER] Gửi 2 message (Gửi khi job đã tắt: 3001, 3002) vào Kafka topic 'orders_stream'...
+[PRODUCER] Đã gửi thành công 2 message.
+
+-------------------------------------------
+Batch: 0
+-------------------------------------------
++---+-----+---------+------+
+|key|value|partition|offset|
++---+-----+---------+------+
++---+-----+---------+------+
+```
+- **Hiện tượng:** Batch 0 hoàn toàn rỗng. Cả 2 message `3001` và `3002` (cùng tất cả message cũ trước đó) **đều không được đọc lại**.
+- **Nguyên nhân:** Khi chạy lại mà không có checkpoint định kỳ lưu offset, cấu hình `latest` chỉ định Spark lấy vị trí hiện tại của Topic tại thời điểm bắt đầu query làm mốc ban đầu. Toàn bộ các message đến trước thời điểm query khởi chạy đều bị bỏ qua.
+
+### 12.3. Thử nghiệm 3: So sánh Partition trong Kafka với Partition do Spark tạo ra
+Sử dụng `foreachBatch` kết hợp `rdd.getNumPartitions()` và `rdd.glom()` để bóc tách cấu trúc vật lý của DataFrame trong mỗi micro-batch:
+```python
+def analyze_batch(batch_df, batch_id):
+    num_spark_parts = batch_df.rdd.getNumPartitions()
+    glommed = batch_df.select("partition", "offset").rdd.glom().collect()
+    for spark_part_id, rows in enumerate(glommed):
+        kafka_parts = set(r["partition"] for r in rows)
+        print(f"  + Spark Partition [{spark_part_id}]: {len(rows)} dòng | Kafka Partition: {kafka_parts}")
+```
+- **Kết quả đo lường thực tế trên console:**
+```text
+************************************************************
+KẾT QUẢ PHÂN TÍCH ÁNH XẠ PARTITION Ở MICRO-BATCH 0:
+-> Tổng số dòng trong Batch: 78
+-> Số lượng Spark Partitions: 3
+  + Spark Partition [0]: 24 dòng | Kafka Partition: {2} | Offset: [0 -> 23]
+  + Spark Partition [1]: 22 dòng | Kafka Partition: {1} | Offset: [0 -> 21]
+  + Spark Partition [2]: 32 dòng | Kafka Partition: {0} | Offset: [0 -> 31]
+************************************************************
+```
+- **Kết luận:**
+  1. Số lượng Spark Partition tạo ra bằng **chính xác số lượng Kafka Partition của Topic** ($3 = 3$).
+  2. Mỗi Spark Partition ánh xạ độc quyền với đúng 1 Kafka Partition (Partition 0 Spark $\leftrightarrow$ Partition 2 Kafka, Partition 1 Spark $\leftrightarrow$ Partition 1 Kafka, Partition 2 Spark $\leftrightarrow$ Partition 0 Kafka).
+  3. Dự đoán ở Ngày 2 (Câu 7) hoàn toàn trùng khớp với thực nghiệm!
+
+---
+
+## 13. Trả Lời Các Câu Hỏi Cuối Bài (Ngày 3)
+
+### Câu 1: Vì sao khi đọc Kafka cần cast value sang string trước khi parse JSON?
+- **Bản chất của Kafka:** Kafka lưu trữ và vận chuyển message dưới dạng mảng byte thô (`binary` / `byte[]`). Do đó khi Spark đọc topic Kafka qua connector, cột `value` có kiểu dữ liệu là `BinaryType`.
+- **Yêu cầu của hàm `from_json`:** Hàm `from_json(col, schema)` trong Spark SQL chỉ chấp nhận đầu vào là một chuỗi ký tự (`StringType`) chứa biểu diễn JSON hợp lệ. Nếu truyền trực tiếp cột `BinaryType` vào `from_json`, Spark Catalyst Analyzer sẽ báo lỗi không khớp kiểu dữ liệu (`AnalysisException: cannot resolve 'from_json' due to data type mismatch`).
+- Vì vậy, bước `F.col("value").cast("string")` là bắt buộc để giải mã mảng byte thành chuỗi văn bản JSON trước khi bóc tách schema.
+
+---
+
+### Câu 2: Message JSON lỗi thì cột ra sao sau `from_json`, vì sao không nên loại bỏ ngay các dòng này?
+- **Trạng thái cột sau `from_json` khi JSON lỗi:**
+  - Khi gặp message không thể parse (ví dụ chuỗi thô không theo chuẩn JSON hoặc JSON bị thiếu ngoặc, gãy vỡ), hàm `from_json` của Spark mặc định hoạt động ở chế độ `PERMISSIVE`: nó **không làm crash ứng dụng** mà trả về giá trị `NULL` cho Struct/các trường bên trong.
+- **Vì sao không nên loại bỏ ngay các dòng này (`filter(isNotNull)`)?**
+  1. **Nguy cơ mất mát dữ liệu nghiêm trọng (Data Loss):** Trong kiến trúc Streaming của doanh nghiệp, message lỗi có thể là một giao dịch thanh toán quan trọng bị lỗi định dạng do bên thứ 3 hoặc do phiên bản app cũ. Nếu drop ngay lập tức, dữ liệu biến mất vĩnh viễn và không thể đối soát.
+  2. **Mô hình Dead-Letter Queue (DLQ):** Thực tiễn tốt nhất trong Data Engineering là giữ lại chuỗi thô (`raw_value`), gắn cờ cảnh báo (`is_valid_json = false`, `error_reason = MALFORMED_JSON`) và định tuyến (route) các dòng này về một Topic hoặc bảng lưu trữ riêng (Dead-Letter Queue). Đội vận hành có thể theo dõi, cảnh báo hệ thống nguồn và viết script sửa/bù đắp dữ liệu sau.
+
+---
+
+### Câu 3: `earliest` và `latest` khác nhau ở điểm nào, ảnh hưởng gì đến kết quả đọc được?
+| Đặc điểm | `startingOffsets = "earliest"` | `startingOffsets = "latest"` |
+| :--- | :--- | :--- |
+| **Vị trí bắt đầu đọc** | Đọc từ **Offset nhỏ nhất (`0`)** còn tồn tại trong mỗi partition của topic. | Đọc từ **Offset mới nhất hiện tại (`Log-End-Offset`)** của mỗi partition. |
+| **Ảnh hưởng dữ liệu** | Đọc lại **toàn bộ dữ liệu lịch sử** đã từng gửi vào Kafka từ trước đến nay. | **Bỏ qua toàn bộ dữ liệu lịch sử**; chỉ đọc các message gửi đến **sau khi** query streaming đã khởi động. |
+| **Batch 0** | Micro-Batch đầu tiên chứa khối lượng lớn dữ liệu cũ (Backfill/Reprocessing). | Micro-Batch đầu tiên thường rỗng (`0 rows`) nếu chưa có message mới. |
+| **Ứng dụng thực tế** | Dùng khi triển khai pipeline mới cần nạp lại toàn bộ lịch sử (Backfill) hoặc tính toán lại từ đầu. | Dùng khi chỉ quan tâm đến dữ liệu thời gian thực (Real-time alerting), không cần xử lý dữ liệu cũ. |
+
+---
+
+### Câu 4: Vì sao join ở đây là stream-static join, không phải stream-stream join?
+- **Stream-Static Join:** Là phép join giữa một luồng dữ liệu liên tục (`orders` - Streaming DataFrame) và một tập dữ liệu tĩnh cố định (`customers.csv` - Batch DataFrame nạp qua `spark.read`).
+  - Phép join này không cần duy trì bộ nhớ đệm trạng thái (State Store) theo thời gian hay thiết lập Watermark, vì tập dữ liệu tĩnh luôn sẵn sàng trong bộ nhớ (được broadcast đến các executor).
+- **Stream-Stream Join:** Là phép join giữa hai luồng dữ liệu streaming độc lập (ví dụ luồng clickstream và luồng payment). Cả hai bên đều biến động theo thời gian, đòi hỏi Spark phải lưu trữ trạng thái trong State Store và yêu cầu bắt buộc phải có Watermark cùng điều kiện ràng buộc thời gian (Time Constraint) để dọn dẹp các bản ghi quá hạn, tránh tràn bộ nhớ.
+- Trong bài thực hành này, danh mục khách hàng là bảng tra cứu tĩnh, nên mô hình chuẩn xác là **Stream-Static Join**.
+
+---
+
+### Câu 5: Một partition của Kafka tương ứng với gì khi Spark đọc topic?
+- **Ánh xạ 1-1:** Khi Apache Spark đọc một Kafka topic, **một Kafka Partition tương ứng với chính xác một Spark Partition** trong RDD/DataFrame của mỗi micro-batch:
+  $$\mathbf{1 \text{ Kafka Partition}} \iff \mathbf{1 \text{ Spark Partition}} \iff \mathbf{1 \text{ Spark Task}}$$
+- **Ý nghĩa về mặt tính toán & hiệu năng:**
+  - Topic `orders_stream` có **3 partition** $\implies$ Spark tạo ra **3 partitions** trong mỗi micro-batch và phân bổ **3 Tasks** chạy song song trên các Core của Executor.
+  - Số lượng Kafka partition chính là trần giới hạn tối đa cho mức độ song song hóa (Parallelism) ở tầng nạp dữ liệu (read) của Spark. Muốn tăng số Task đọc đồng thời từ Kafka, bắt buộc phải tăng số lượng partition của Topic trên cụm Kafka.
+

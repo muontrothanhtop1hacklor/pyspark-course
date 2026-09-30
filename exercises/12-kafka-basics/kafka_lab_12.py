@@ -34,7 +34,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from kafka import KafkaProducer, KafkaConsumer
 from kafka.admin import KafkaAdminClient, NewTopic
-from kafka.errors import TopicAlreadyExistsError
+from kafka.errors import TopicAlreadyExistsError, NoBrokersAvailable
 
 BOOTSTRAP_SERVERS = ["127.0.0.1:9092"]
 TOPIC_NAME = "orders_stream"
@@ -289,13 +289,29 @@ def main():
     print("=" * 75)
     print("BẮT ĐẦU CHẠY TOÀN BỘ BÀI THỰC HÀNH 12 (KAFKA BASICS)")
     print("=" * 75)
-    ensure_topic()
-    run_producer()
-    run_consumer_audit()
-    run_experiments()
-    print("\n" + "=" * 75)
-    print("HOÀN THÀNH TOÀN BỘ BÀI 12 THÀNH CÔNG!")
-    print("=" * 75)
+    try:
+        ensure_topic()
+        run_producer()
+        run_consumer_audit()
+        run_experiments()
+        print("\n" + "=" * 75)
+        print("HOÀN THÀNH TOÀN BỘ BÀI 12 THÀNH CÔNG!")
+        print("=" * 75)
+    except NoBrokersAvailable:
+        print("\n" + "!" * 75)
+        print("[LỖI KẾT NỐI] Không tìm thấy Kafka Broker tại 127.0.0.1:9092!")
+        print("Nguyên nhân:")
+        print("  - Docker Desktop chưa được bật, hoặc")
+        print("  - Kafka container chưa được khởi chạy trên cổng 9092.")
+        print("\nCách xử lý nhanh:")
+        print("  1. Mở ứng dụng Docker Desktop trên Windows.")
+        print("  2. Mở PowerShell và chạy lệnh tạo container Kafka KRaft:")
+        print("     docker run -d --name kafka -p 9092:9092 --restart unless-stopped apache/kafka:latest")
+        print("     (Nếu container 'kafka' đã có sẵn: docker start kafka)")
+        print("  3. Chạy lại script này:")
+        print("     python exercises/12-kafka-basics/kafka_lab_12.py")
+        print("!" * 75)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

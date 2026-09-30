@@ -29,6 +29,7 @@ if hasattr(sys.stderr, "reconfigure"):
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from kafka import KafkaProducer
+from kafka.errors import NoBrokersAvailable
 
 BOOTSTRAP_SERVERS = ["127.0.0.1:9092"]
 TOPIC_NAME = "orders_stream"
@@ -193,12 +194,20 @@ def send_all_batches(producer, sleep_between_batches=2):
 
 
 def main():
-    producer = create_producer()
     try:
-        send_all_batches(producer, sleep_between_batches=2)
-    finally:
-        producer.close()
-        print("\nKafka Producer đã đóng kết nối.")
+        producer = create_producer()
+        try:
+            send_all_batches(producer, sleep_between_batches=2)
+        finally:
+            producer.close()
+            print("\nKafka Producer đã đóng kết nối.")
+    except NoBrokersAvailable:
+        print("\n" + "!" * 75)
+        print("[LỖI KẾT NỐI] Không tìm thấy Kafka Broker tại 127.0.0.1:9092!")
+        print("Nguyên nhân: Docker Desktop hoặc container Kafka chưa hoạt động.")
+        print("Cách xử lý: Khởi động Docker Desktop và chạy container Kafka trên cổng 9092.")
+        print("!" * 75)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
