@@ -1,6 +1,6 @@
 # PySpark Course - From Spark Basics to Lakehouse Orchestration
 
-Khóa học và lộ trình thực hành PySpark toàn diện trên Windows: đi từ đọc/ghi dữ liệu cơ bản, Data Types & Schema Control, Joins, Window Functions, Partitioning, UDFs đến Full ETL Pipeline, Data Lakehouse (Bronze/Silver/Gold/MinIO/Iceberg) và Workflow Orchestration với Airflow.
+Khóa học và lộ trình thực hành PySpark toàn diện trên Windows: đi từ đọc/ghi dữ liệu cơ bản, Data Types & Schema Control, Joins, Window Functions, Partitioning, UDFs đến Full ETL Pipeline, Data Lakehouse (Bronze/Silver/Gold/MinIO/Iceberg), Workflow Orchestration với Airflow, và Streaming với Kafka.
 
 ---
 
@@ -15,6 +15,7 @@ Khóa học và lộ trình thực hành PySpark toàn diện trên Windows: đi
 - **Hàm tự định nghĩa (UDF):** So sánh hiệu năng thực tế trên 1 triệu dòng giữa Built-in Functions, Python UDF, Vectorized Pandas UDF (`@pandas_udf`) và UDTF (`@udtf` với `LATERAL`).
 - **Quy trình ETL hoàn chỉnh:** Xây dựng pipeline đọc thô → kiểm tra schema → phân loại lỗi (quarantine) → dedup → join → transform → aggregate → partitioned write → round-trip validation.
 - **Data Lakehouse & Điều phối:** Xây dựng kiến trúc 3 lớp Bronze → Silver → Gold, upload MinIO bằng `boto3`, tích hợp Nessie/Iceberg và điều phối DAGs đa nguồn bằng Apache Airflow.
+- **Structured Streaming & Kafka:** Đọc ghi realtime, kiểm soát Checkpoint, xử lý dữ liệu trễ với Watermark, Output Modes, quản lý state, các loại Triggers, và điều hướng Multi-Sink bằng foreachBatch.
 
 ---
 
@@ -41,7 +42,11 @@ pyspark-course/
 │   ├── 09-full-etl-pipeline/             ← Flow PySpark hoàn chỉnh 10 bước khép kín
 │   ├── 10-udf-pandas-udtf/               ← Benchmark 1M dòng: UDF vs Pandas UDF vs Built-in
 │   ├── 11-batch-vs-streaming/            ← Đối chiếu Batch vs Structured Streaming (micro-batch, checkpoint)
-│   └── 12-kafka-basics/                  ← Kafka KRaft Docker, Topic, Partition, Offset, Consumer Group
+│   ├── 12-kafka-basics/                  ← Kafka KRaft Docker, Topic, Partition, Offset, Consumer Group
+│   ├── 13-spark-kafka/                   ← Đọc dữ liệu từ Kafka, Parse JSON, Stream-Static Join
+│   ├── 14-spark-checkpointing-watermark/ ← Checkpoint, Watermark (Late Data) và 3 Output Modes
+│   ├── 15-spark-end-to-end-pipeline/     ← Streaming Pipeline hoàn chỉnh đa luồng (Multi Sinks/Checkpoints)
+│   └── 16-spark-triggers-monitoring/     ← Triggers (availableNow, processingTime), Monitor query, foreachBatch
 ├── logs/                                 ← Mẫu nhật ký học tập theo từng buổi
 └── README.md
 ```
@@ -66,6 +71,10 @@ pyspark-course/
 | **10** | [`10-udf-pandas-udtf`](./exercises/10-udf-pandas-udtf/README.md) | So sánh hiệu năng UDF vs Built-in vs Pandas UDF vs UDTF | `customers_1m.csv` (1M dòng) |
 | **11** | [`11-batch-vs-streaming`](./exercises/11-batch-vs-streaming/README.md) | Đối chiếu Batch vs Structured Streaming, micro-batch, checkpoint & audit | `orders_{1,2,3}.csv` (30 dòng) |
 | **12** | [`12-kafka-basics`](./exercises/12-kafka-basics/README.md) | Kafka KRaft Docker, Topic 3 partitions, Producer 30 JSON msgs, Consumer Group & Lag | `orders_stream` (30 message stream) |
+| **13** | [`13-spark-kafka`](./exercises/13-spark-kafka/README.md) | Tích hợp Spark & Kafka, Schema parsing, DLQ, Stream-Static Join | `orders_stream` x `customers.csv` |
+| **14** | [`14-spark-checkpointing-watermark`](./exercises/14-spark-checkpointing-watermark/README.md) | Cơ chế Checkpoint, Output Modes (complete/update/append), Watermark xử lý Late Data | `orders_stream` |
+| **15** | [`15-spark-end-to-end-pipeline`](./exercises/15-spark-end-to-end-pipeline/README.md) | End-to-End Streaming Pipeline: 3 Sink độc lập, Dedup bằng foreachBatch+Window | `orders_stream` x `customers.csv` |
+| **16** | [`16-spark-triggers-monitoring`](./exercises/16-spark-triggers-monitoring/README.md) | Các loại Trigger (availableNow), Monitoring Query Status, Multi-Sink trong 1 query | `orders_stream` |
 
 ---
 
@@ -129,6 +138,11 @@ $dir = ".\exercises\02-orders-lakehouse"
 - [09 – Full End-to-End ETL Pipeline](./exercises/09-full-etl-pipeline/README.md)
 - [10 – UDF, Pandas UDF & UDTF Benchmark](./exercises/10-udf-pandas-udtf/README.md)
 - [11 – Batch vs Structured Streaming](./exercises/11-batch-vs-streaming/README.md)
+- [12 – Kafka Basics & KRaft Docker](./exercises/12-kafka-basics/README.md)
+- [13 – Spark Đọc Kafka & Stream-Static Join](./exercises/13-spark-kafka/README.md)
+- [14 – Checkpoint, Output Modes & Watermark](./exercises/14-spark-checkpointing-watermark/README.md)
+- [15 – Streaming Pipeline Hoàn Chỉnh đa luồng](./exercises/15-spark-end-to-end-pipeline/README.md)
+- [16 – Triggers, Multi-Sink & Tổng kết Streaming](./exercises/16-spark-triggers-monitoring/README.md)
 
 ---
 
@@ -147,3 +161,4 @@ $dir = ".\exercises\02-orders-lakehouse"
 - 27/09 – UDF và Vectorized Execution: Hoàn thành bài `10-udf-pandas-udtf`, benchmark trên 1.000.000 dòng giữa Python UDF, Built-in function, Pandas UDF vector hóa và UDTF.
 - 28/09 – Chuẩn hóa cấu trúc Repository: Tái cấu trúc thư mục `exercises/` theo chuẩn kebab-case đánh số thống nhất từ 00 đến 10.
 - 28/09 – Structured Streaming: Hoàn thành bài `11-batch-vs-streaming`, đối chiếu Batch và Streaming, micro-batch, thử nghiệm lỗi, checkpoint và audit parity.
+- 01/10 – Tuần lễ Kafka & Spark Streaming: Setup Kafka KRaft, thử nghiệm Stream-Static Join (`13`), kiểm soát Checkpoint/Output Mode/Watermark (`14`), thiết lập 3 luồng Streaming Pipeline độc lập (`15`) và kết thúc bằng Trigger/Multi-Sink tuning (`16`).
