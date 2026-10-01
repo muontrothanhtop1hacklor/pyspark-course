@@ -1,0 +1,11 @@
+customer_id,customer_name,customer_type
+C001,Nguyen Van A,VIP
+C002,Tran Thi B,REGULAR
+C003,Le Van C,VIP
+C004,Pham Thi D,REGULAR
+C005,Hoang Van E,NEW
+C006,Vu Thi F,REGULAR
+C007,Dang Van G,VIP
+C008,Bui Thi H,NEW
+C009,Do Van I,REGULAR
+C010,Ngo Thi K,VIP
