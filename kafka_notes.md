@@ -1,4 +1,4 @@
-# Báo cáo thực hành (Ngày 2): Kafka Cơ Bản & Thử Nghiệm Streaming Source
+# Báo cáo thực hành (Bài 12): Kafka Cơ Bản & Thử Nghiệm Streaming Source
 
 Báo cáo chi tiết quá trình dựng cụm Apache Kafka 1 Broker chế độ KRaft bằng Docker, kiểm thử Topic & Partition, xây dựng Python Producer với dữ liệu JSON dirty, kiểm tra Consumer Offset và 5 kịch bản thử nghiệm hành vi Consumer Group.
 
