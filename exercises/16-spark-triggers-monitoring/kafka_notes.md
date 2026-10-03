@@ -28,13 +28,13 @@ Thay vì giữ cụm (cluster) Spark chạy 24/7 (tốn tài nguyên), ta thiế
 3. **Thao tác External:** Cho phép gọi các API ngoại vi, lưu DB truyền thống không có sink connector chuẩn, hoặc thực thi câu lệnh SQL tuỳ biến sau khi ghi xong một chunk dữ liệu.
 
 ### Sau một tuần, phần nào của Structured Streaming thấy khó nắm nhất?
-*(Tự suy ngẫm giả định)*
+
 - **Window + Watermark State:** Rất dễ bị nhầm lẫn giữa Event-time và Processing-time. Spark quản lý trạng thái (stateStore) ngầm, đôi khi gây khó hiểu tại sao dữ liệu bị drop hoặc tại sao kết quả append mãi chưa chịu in ra màn hình.
 - **Checkpoint Compatibility:** Lỗi "Metadata Mismatch" do sửa đổi schema hoặc thay đổi outputMode. Cảm giác checkpoint của Spark quá cứng nhắc, nếu đổi logic code thì thường phải xoá toàn bộ thư mục checkpoint và chịu khó chạy lại từ đầu.
 
 ---
 
-## 3. Câu hỏi và phần chưa chắc (Open Questions để tra cứu thêm)
+## 3. Câu hỏi và phần chưa chắc 
 1. **Quản lý kích thước thư mục Checkpoint:** Làm sao để thư mục checkpoint không phình to ra theo thời gian khi state ngày càng lớn?
 2. **Tối ưu Watermark:** Làm sao để chọn giá trị delay hợp lý cho Watermark mà không ảnh hưởng lớn đến độ trễ hiển thị (latency)? Dựa vào thông số nào từ Kafka để biết data thường đến trễ bao lâu?
 3. **Kafka offset vs. Spark Checkpoint:** Nếu một ngày thư mục Checkpoint bị lỡ mất hoặc mất đồng bộ hoàn toàn với Kafka retention thì làm sao phục hồi luồng dữ liệu mà không bị duplicate?
