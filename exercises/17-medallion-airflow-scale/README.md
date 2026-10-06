@@ -44,7 +44,21 @@ Tài liệu này mô tả quy trình thực thi kiến trúc Medallion (Bronze -
   - `customer_360`: Tổng hợp chân dung khách hàng (tổng chi tiêu, số lượng đơn hàng, đơn hàng giá trị cao nhất).
   - `category_performance`: Thống kê doanh thu và sản lượng theo danh mục.
   - `shipping_performance`: Tính toán thời gian giao hàng, phân loại `Is_Late_Delivery` và phí vận chuyển trung bình.
-
 ---
 
+## 3. Điều phối tự động với Apache Airflow (Orchestration)
 
+Để đảm bảo các tiến trình Spark xử lý dữ liệu khổng lồ (100M rows) được chạy theo đúng thứ tự tuyến tính và tránh tranh chấp tài nguyên, hệ thống áp dụng **Apache Airflow** để điều phối (Orchestration) luồng ETL thay vì chạy thủ công.
+
+### Thiết kế DAG (`medallion_scale_etl_dag`)
+Toàn bộ luồng được định nghĩa trong file `dags/etl_scale_dag.py` với cấu trúc nối tiếp:
+1. `run_bronze_layer` (BashOperator): Thực thi kịch bản `etl_bronze.py`. Kích hoạt đầu tiên để đưa dữ liệu Raw vào lớp Bronze.
+2. `run_silver_layer` (BashOperator): Đợi Bronze thành công mới bắt đầu. Đây là tiến trình chịu tải nặng nhất do phải thao tác Shuffle loại bỏ trùng lặp và phân vùng (Partitioning) toàn bộ 100M dòng.
+3. `run_gold_layer` (BashOperator): Kích hoạt cuối cùng khi Silver đã chuẩn hóa xong dữ liệu, thực hiện Join/Aggregate ra 3 bảng báo cáo cuối cùng.
+
+### Cơ chế Tham số hóa (Parametrization)
+DAG được thiết kế linh hoạt bằng cách sử dụng `{{ params.scale }}`. Khi người dùng bấm **Trigger DAG w/ config** trên giao diện Airflow, họ có thể truyền vào biến `{"scale": "100m"}` (hoặc `1m`, `10m`). DAG sẽ tự động định tuyến đường dẫn cho toàn bộ các script Spark để trỏ đúng vào kích cỡ tệp dữ liệu mong muốn mà không cần sửa code.
+
+### Quản trị rủi ro & Restartability (Khả năng chạy lại)
+- **Khắc phục nghẽn tài nguyên:** Xử lý 100 triệu dòng dễ dẫn đến hiện tượng quá tải (RAM/Disk I/O). Nếu một task bị lỗi (văng OOM hoặc đứt kết nối), Airflow sẽ khoanh vùng lỗi tại chính task đó (màu đỏ - Failed hoặc màu vàng - Up_for_retry). 
+- **Tính luỹ đẳng (Idempotency):** Code Spark được thiết lập sử dụng `mode("overwrite")`. Nhờ vậy, khi xử lý lỗi, người vận hành chỉ việc bấm nút **Clear** trên giao diện Airflow tại task bị hỏng để chạy lại. Hệ thống sẽ ghi đè dữ liệu mới lên dữ liệu lỗi mà không lo bị nhân bản (duplicate) các dòng dữ liệu.
