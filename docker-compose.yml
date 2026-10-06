@@ -81,6 +81,8 @@ services:
       - airflow-data:/opt/airflow
       - ./exercises/03-airflow-orchestration/dags:/opt/airflow/dags
       - ./exercises/02-orders-lakehouse:/opt/airflow/exercises/02-orders-lakehouse
+      - "./files (5):/opt/airflow/files_5"
+      - "./files (5)/dags:/opt/airflow/dags/files_5"
 
   airflow-webserver:
     build:
@@ -105,6 +107,8 @@ services:
       - airflow-data:/opt/airflow
       - ./exercises/03-airflow-orchestration/dags:/opt/airflow/dags
       - ./exercises/02-orders-lakehouse:/opt/airflow/exercises/02-orders-lakehouse
+      - "./files (5):/opt/airflow/files_5"
+      - "./files (5)/dags:/opt/airflow/dags/files_5"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s
@@ -133,6 +137,8 @@ services:
       - airflow-data:/opt/airflow
       - ./exercises/03-airflow-orchestration/dags:/opt/airflow/dags
       - ./exercises/02-orders-lakehouse:/opt/airflow/exercises/02-orders-lakehouse
+      - "./files (5):/opt/airflow/files_5"
+      - "./files (5)/dags:/opt/airflow/dags/files_5"
 
 volumes:
   minio-data:
