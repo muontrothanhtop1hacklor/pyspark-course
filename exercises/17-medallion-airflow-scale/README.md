@@ -62,3 +62,9 @@ DAG được thiết kế linh hoạt bằng cách sử dụng `{{ params.scale 
 ### Quản trị rủi ro & Restartability (Khả năng chạy lại)
 - **Khắc phục nghẽn tài nguyên:** Xử lý 100 triệu dòng dễ dẫn đến hiện tượng quá tải (RAM/Disk I/O). Nếu một task bị lỗi (văng OOM hoặc đứt kết nối), Airflow sẽ khoanh vùng lỗi tại chính task đó (màu đỏ - Failed hoặc màu vàng - Up_for_retry). 
 - **Tính luỹ đẳng (Idempotency):** Code Spark được thiết lập sử dụng `mode("overwrite")`. Nhờ vậy, khi xử lý lỗi, người vận hành chỉ việc bấm nút **Clear** trên giao diện Airflow tại task bị hỏng để chạy lại. Hệ thống sẽ ghi đè dữ liệu mới lên dữ liệu lỗi mà không lo bị nhân bản (duplicate) các dòng dữ liệu.
+
+---
+
+### Kết quả chạy DAG
+
+![Airflow DAG Success](airflow_dag_success.png)
