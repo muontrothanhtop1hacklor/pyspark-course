@@ -81,8 +81,8 @@ services:
       - airflow-data:/opt/airflow
       - ./exercises/03-airflow-orchestration/dags:/opt/airflow/dags
       - ./exercises/02-orders-lakehouse:/opt/airflow/exercises/02-orders-lakehouse
-      - "./files (5):/opt/airflow/files_5"
-      - "./files (5)/dags:/opt/airflow/dags/files_5"
+      - "./exercises/17-medallion-airflow-scale:/opt/airflow/exercises/17-medallion-airflow-scale"
+      - "./exercises/17-medallion-airflow-scale/dags:/opt/airflow/dags/17_medallion"
 
   airflow-webserver:
     build:
@@ -107,8 +107,8 @@ services:
       - airflow-data:/opt/airflow
       - ./exercises/03-airflow-orchestration/dags:/opt/airflow/dags
       - ./exercises/02-orders-lakehouse:/opt/airflow/exercises/02-orders-lakehouse
-      - "./files (5):/opt/airflow/files_5"
-      - "./files (5)/dags:/opt/airflow/dags/files_5"
+      - "./exercises/17-medallion-airflow-scale:/opt/airflow/exercises/17-medallion-airflow-scale"
+      - "./exercises/17-medallion-airflow-scale/dags:/opt/airflow/dags/17_medallion"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s
@@ -137,8 +137,8 @@ services:
       - airflow-data:/opt/airflow
       - ./exercises/03-airflow-orchestration/dags:/opt/airflow/dags
       - ./exercises/02-orders-lakehouse:/opt/airflow/exercises/02-orders-lakehouse
-      - "./files (5):/opt/airflow/files_5"
-      - "./files (5)/dags:/opt/airflow/dags/files_5"
+      - "./exercises/17-medallion-airflow-scale:/opt/airflow/exercises/17-medallion-airflow-scale"
+      - "./exercises/17-medallion-airflow-scale/dags:/opt/airflow/dags/17_medallion"
 
 volumes:
   minio-data:

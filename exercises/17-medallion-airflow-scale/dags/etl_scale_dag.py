@@ -25,7 +25,7 @@ with DAG(
 ) as dag:
     
     # The base path inside the docker container
-    base_dir = "/opt/airflow/files_5"
+    base_dir = "/opt/airflow/exercises/17-medallion-airflow-scale"
     scale = "{{ params.scale }}"
     
     input_path = f"{base_dir}/{scale}/data/raw"
