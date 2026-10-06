@@ -40,3 +40,6 @@ warehouse/
 .idea/
 .DS_Store
 Thumbs.db
+
+**/data/**
+!**/scripts/.gitkeep
