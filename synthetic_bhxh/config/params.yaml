@@ -1,0 +1,44 @@
+# CẦN XÁC NHẬN theo văn bản hiện hành
+rates:
+  bhxh: 0.255 # 8% NLĐ + 17.5% NSDLĐ
+  bhyt: 0.045 # 1.5% NLĐ + 3% NSDLĐ
+  bhtn: 0.02 # 1% NLĐ + 1% NSDLĐ
+  tnld_bnn: 0.005 # 0.5% NSDLĐ
+
+# CẦN XÁC NHẬN theo văn bản hiện hành (Bảng lương tối thiểu vùng theo thời kỳ)
+min_wage_regions:
+  "2010": { V1: 1200000, V2: 1080000, V3: 950000, V4: 920000 }
+  "2015": { V1: 3100000, V2: 2750000, V3: 2400000, V4: 2150000 }
+  "2020": { V1: 4420000, V2: 3920000, V3: 3430000, V4: 3070000 }
+  "2022": { V1: 4680000, V2: 4160000, V3: 3640000, V4: 3250000 }
+  "2024": { V1: 4960000, V2: 4410000, V3: 3860000, V4: 3450000 }
+
+base_salary: 2340000 # Mức lương cơ sở hiện hành 2.34M (Dùng để tính mức trần)
+
+dates:
+  start_year: 2010
+  end_year: 2026
+  end_month: 9
+  drift_start_year: 2024
+
+generation:
+  global_seed: 42
+  error_rate: 0.03
+  num_units:
+    100K: 1500  # for testing
+    1M: 15000
+    10M: 100000
+    100M: 600000
+
+# CẦN XÁC NHẬN: Tỷ lệ nhân khẩu và mã tỉnh giả định
+demographics:
+  gender_ratio: [0.55, 0.45] # Nam, Nữ
+  
+provinces:
+  "79": { name: "Hồ Chí Minh", weight: 0.25 }
+  "01": { name: "Hà Nội", weight: 0.15 }
+  "74": { name: "Bình Dương", weight: 0.10 }
+  "75": { name: "Đồng Nai", weight: 0.10 }
+  "48": { name: "Đà Nẵng", weight: 0.05 }
+  "31": { name: "Hải Phòng", weight: 0.05 }
+  "00": { name: "Khác", weight: 0.30 }

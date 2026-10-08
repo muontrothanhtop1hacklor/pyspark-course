@@ -43,3 +43,7 @@ Thumbs.db
 
 **/data/**
 !**/scripts/.gitkeep
+**/_resume_100M/
+**/_answer_key/
+*.log
+*.tar.gz
