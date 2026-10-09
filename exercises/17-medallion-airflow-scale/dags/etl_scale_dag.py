@@ -20,7 +20,7 @@ with DAG(
     start_date=datetime(2025, 1, 1),
     catchup=False,
     params={
-        "scale": "1m" # Default scale, user can trigger with 10m or 100m
+        "scale": "1M" # Default scale, user can trigger with 10M or 100M
     }
 ) as dag:
     
@@ -28,7 +28,8 @@ with DAG(
     base_dir = "/opt/airflow/exercises/17-medallion-airflow-scale"
     scale = "{{ params.scale }}"
     
-    input_path = f"{base_dir}/{scale}/data/raw"
+    # Map input to the generated synthetic BHXH data
+    input_path = f"/opt/airflow/synthetic_bhxh/output/{scale}"
     lakehouse_path = f"{base_dir}/{scale}/data/lakehouse"
 
     run_bronze = BashOperator(

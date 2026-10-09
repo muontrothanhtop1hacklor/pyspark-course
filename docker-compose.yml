@@ -83,6 +83,7 @@ services:
       - ./exercises/02-orders-lakehouse:/opt/airflow/exercises/02-orders-lakehouse
       - "./exercises/17-medallion-airflow-scale:/opt/airflow/exercises/17-medallion-airflow-scale"
       - "./exercises/17-medallion-airflow-scale/dags:/opt/airflow/dags/17_medallion"
+      - "./synthetic_bhxh:/opt/airflow/synthetic_bhxh"
 
   airflow-webserver:
     build:
@@ -109,6 +110,7 @@ services:
       - ./exercises/02-orders-lakehouse:/opt/airflow/exercises/02-orders-lakehouse
       - "./exercises/17-medallion-airflow-scale:/opt/airflow/exercises/17-medallion-airflow-scale"
       - "./exercises/17-medallion-airflow-scale/dags:/opt/airflow/dags/17_medallion"
+      - "./synthetic_bhxh:/opt/airflow/synthetic_bhxh"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s
@@ -139,6 +141,7 @@ services:
       - ./exercises/02-orders-lakehouse:/opt/airflow/exercises/02-orders-lakehouse
       - "./exercises/17-medallion-airflow-scale:/opt/airflow/exercises/17-medallion-airflow-scale"
       - "./exercises/17-medallion-airflow-scale/dags:/opt/airflow/dags/17_medallion"
+      - "./synthetic_bhxh:/opt/airflow/synthetic_bhxh"
 
 volumes:
   minio-data:
