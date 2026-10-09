@@ -1,23 +1,20 @@
-# Kiến trúc Data Lakehouse ETL - Quy mô 1M đến 100M
+# Kiến trúc Data Lakehouse ETL - Quy mô 1M đến 100M (Dữ liệu BHXH)
 
-Tài liệu này mô tả quy trình thực thi kiến trúc Medallion (Bronze - Silver - Gold) cho dự án và các kỹ thuật xử lý dữ liệu ở quy mô lớn (1M - 100M rows).
+Tài liệu này mô tả quy trình thực thi kiến trúc Medallion (Bronze - Silver - Gold) cho dự án Bảo Hiểm Xã Hội (BHXH) và các kỹ thuật xử lý dữ liệu ở quy mô lớn (1M - 10M - 100M dòng).
 
-## 1. Yêu cầu thiết kế khi mở rộng quy mô (Scale-up)
+## 1. Nhận xét & Đánh giá khi Scale từ 1M lên 100M
 
-### Thành phần tái sử dụng từ quy trình nhỏ
-- **Data Cleansing:** Các phép biến đổi cơ bản (ví dụ: `upper(trim())`), ép kiểu (`try_to_date`), gán giá trị mặc định (`fillna`) được giữ nguyên.
-- **Quarantine/Invalid Orders:** Cơ chế kiểm toán dữ liệu vi phạm điều kiện nghiệp vụ (âm tiền, null ngày tháng). Dữ liệu lỗi được chuyển vào thư mục riêng biệt để phân tích thay vì bị loại bỏ hoàn toàn.
-- **Enrichment:** Phân loại và tạo cột mới phục vụ báo cáo.
+Khi hệ thống đối mặt với việc mở rộng dữ liệu từ 1 Triệu lên 100 Triệu dòng, chúng ta không thể sử dụng cấu hình mặc định (vốn chạy tốt trên 1M). Dưới đây là những khác biệt và sự điều chỉnh bắt buộc:
 
-### Yêu cầu thay đổi ở quy mô 1M - 100M rows
-1. **Memory Tuning:**
-   - Cấu hình bắt buộc: Cấp phát tài nguyên rõ ràng thông qua `.config("spark.driver.memory", "8g")` và `spark.executor.memory`. Thiết lập mặc định của Spark có thể dẫn đến lỗi Out-of-Memory (OOM) khi thực hiện Shuffle trên tập dữ liệu lớn.
-2. **Deduplication & Shuffle Management:**
-   - Sử dụng hàm `Window` để lọc trùng lặp yêu cầu quá trình Shuffle. Cần thiết lập `spark.sql.shuffle.partitions` (ví dụ: 200) để phân bổ khối lượng công việc, tránh hiện tượng Data Skew và giảm thiểu rủi ro nghẽn cổ chai.
-3. **Partitioning:**
-   - Khi ghi dữ liệu ở lớp Silver, cần thiết lập `partitionBy("order_year", "order_month")`. Tính năng này cho phép cơ chế Partition Discovery hoạt động ở các bước tiếp theo, loại bỏ thao tác full-scan toàn bộ file.
-4. **Điều phối tài nguyên (Resource Orchestration):**
-   - Hoạt động I/O và CPU đạt mức tối đa ở quy mô 100M rows. Yêu cầu sử dụng hệ thống lên lịch (như Apache Airflow) để đảm bảo các tiến trình được chạy tuần tự, tránh tranh chấp tài nguyên hệ thống.
+1. **Memory Tuning (Tối ưu Bộ nhớ):**
+   - **Tại 1M:** Spark có thể chạy mượt mà với tài nguyên cấp phát mặc định (`1g` memory).
+   - **Tại 100M:** Các thao tác Join và Aggregate (ở lớp Silver và Gold) đòi hỏi một lượng lớn dữ liệu phải được nạp vào RAM. Nếu không cấu hình rõ ràng thông qua `.config("spark.driver.memory", "8g")` và `spark.executor.memory`, hệ thống chắc chắn sẽ sập với lỗi `Out-of-Memory (OOM)`.
+2. **Shuffle Management (Quản lý trộn dữ liệu):**
+   - Khi thực hiện `.groupBy("MA_DON_VI")` ở lớp Gold, dữ liệu của cùng một đơn vị phải di chuyển xuyên qua mạng để hội tụ về cùng một Executor (quá trình Shuffle). 
+   - **Tại 10M / 100M:** Bắt buộc phải tăng `spark.sql.shuffle.partitions` (ví dụ: `200` thay vì mặc định `200` hoặc nhỏ hơn) để chia nhỏ khối lượng công việc, tránh hiện tượng thắt cổ chai (bottleneck) ở một vài Node cụ thể.
+3. **Partitioning (Phân mảnh Ổ đĩa):**
+   - **Tại 1M:** Ghi ra 1 file hay 63 file (chia theo `MA_TINH`) không tạo ra khác biệt thời gian rõ rệt.
+   - **Tại 100M:** Nếu ghi ra 1 file duy nhất, dung lượng file parquet sẽ rất khổng lồ. Việc `partitionBy("MA_TINH")` ở lớp Silver không chỉ giúp song song hóa luồng Ghi (Write) mà còn kích hoạt cơ chế *Partition Discovery*, loại bỏ hoàn toàn hiện tượng Full-scan khi đọc lại dữ liệu phân tích từng tỉnh sau này.
 
 ---
 
@@ -25,46 +22,41 @@ Tài liệu này mô tả quy trình thực thi kiến trúc Medallion (Bronze -
 
 ### Lớp Bronze (Raw Ingestion)
 - **File phụ trách:** `etl_bronze.py`
-- **Mục tiêu:** Nạp dữ liệu thô từ hệ thống nguồn (Source System) vào kho lưu trữ.
-- **Hoạt động:** Đọc các file `.parquet` từ thư mục `raw`, duy trì cấu trúc Schema ban đầu, ghi nhận metadata (số lượng bản ghi) và lưu vào `lakehouse/bronze`.
+- **Mục tiêu:** Nạp dữ liệu BHXH thô từ hệ thống sinh tự động (`synthetic_bhxh/output/{scale}`) vào kho lưu trữ Lakehouse.
+- **Hoạt động:** Đọc các thư mục `MASTER`, `DETAIL`, `ML_LABELS`, `ML_ANOMALY` và ghi nguyên trạng vào thư mục `bronze`. Đây là điểm neo an toàn giữ lại toàn bộ lịch sử nguyên bản.
 
-### Lớp Silver (Cleansing, Quarantine & Enrichment)
+### Lớp Silver (Cleansing & Enrichment)
 - **File phụ trách:** `etl_silver.py`
-- **Mục tiêu:** Cung cấp "Single Source of Truth". Dữ liệu được làm sạch và chuẩn hóa phục vụ phân tích.
+- **Mục tiêu:** Cung cấp "Single Source of Truth". Dữ liệu được làm sạch và chuẩn hóa phục vụ Machine Learning và phân tích.
 - **Hoạt động:**
-  1. **Deduplicate:** Loại bỏ các bản ghi trùng lặp thông qua `Window` function, giữ lại bản ghi có `order_timestamp` mới nhất.
-  2. **Quarantine:** Các bản ghi vi phạm quy tắc (`total_amount <= 0`, `quantity < 1`, `order_date is null`) được định tuyến sang thư mục `silver/invalid_orders`.
-  3. **Enrichment:** Phân loại `order_level` (HIGH/MEDIUM/LOW), chuẩn hoá chuỗi văn bản (`status`), và trích xuất dữ liệu thời gian (`order_year`, `order_month`).
-  4. **Write:** Ghi dữ liệu hợp lệ vào `silver/orders` sử dụng `partitionBy`.
+  1. **Enrichment:** Thực hiện phép kết nối (Join) `MASTER` với `ML_LABELS` (chứa nhãn trốn đóng) và `DETAIL` với `ML_ANOMALY` (chứa cờ bất thường).
+  2. **Write:** Ghi dữ liệu đã làm giàu vào `silver/MASTER_ENRICHED` và `silver/DETAIL_ENRICHED` sử dụng `partitionBy("MA_TINH")`.
 
 ### Lớp Gold (Aggregations & Reporting)
 - **File phụ trách:** `etl_gold.py`
-- **Mục tiêu:** Cung cấp các Data Mart phục vụ trực tiếp cho báo cáo và BI Dashboard.
+- **Mục tiêu:** Cung cấp các Data Mart (Bảng tổng hợp) phục vụ trực tiếp cho báo cáo và BI Dashboard.
 - **Hoạt động:**
-  - `customer_360`: Tổng hợp chân dung khách hàng (tổng chi tiêu, số lượng đơn hàng, đơn hàng giá trị cao nhất).
-  - `category_performance`: Thống kê doanh thu và sản lượng theo danh mục.
-  - `shipping_performance`: Tính toán thời gian giao hàng, phân loại `Is_Late_Delivery` và phí vận chuyển trung bình.
+  - `AGG_PERSON`: Tổng hợp lịch sử đóng của từng cá nhân (Tính tổng mức đóng, trung bình lương bình quân, tổng lượt đóng).
+  - `AGG_COMPANY`: Thống kê theo doanh nghiệp (Số lượng nhân sự, tổng tiền BHXH đã nộp, số lượt đóng bất thường).
+
 ---
 
 ## 3. Điều phối tự động với Apache Airflow (Orchestration)
 
-Để đảm bảo các tiến trình Spark xử lý dữ liệu khổng lồ (100M rows) được chạy theo đúng thứ tự tuyến tính và tránh tranh chấp tài nguyên, hệ thống áp dụng **Apache Airflow** để điều phối (Orchestration) luồng ETL thay vì chạy thủ công.
+Để đảm bảo các tiến trình Spark xử lý dữ liệu khổng lồ (100M rows) được chạy theo đúng thứ tự tuyến tính và tránh tranh chấp tài nguyên máy tính, hệ thống áp dụng **Apache Airflow**.
 
 ### Thiết kế DAG (`medallion_scale_etl_dag`)
 Toàn bộ luồng được định nghĩa trong file `dags/etl_scale_dag.py` với cấu trúc nối tiếp:
-1. `run_bronze_layer` (BashOperator): Thực thi kịch bản `etl_bronze.py`. Kích hoạt đầu tiên để đưa dữ liệu Raw vào lớp Bronze.
-2. `run_silver_layer` (BashOperator): Đợi Bronze thành công mới bắt đầu. Đây là tiến trình chịu tải nặng nhất do phải thao tác Shuffle loại bỏ trùng lặp và phân vùng (Partitioning) toàn bộ 100M dòng.
-3. `run_gold_layer` (BashOperator): Kích hoạt cuối cùng khi Silver đã chuẩn hóa xong dữ liệu, thực hiện Join/Aggregate ra 3 bảng báo cáo cuối cùng.
+`run_bronze_layer >> run_silver_layer >> run_gold_layer`
 
-### Cơ chế Tham số hóa (Parametrization)
-DAG được thiết kế linh hoạt bằng cách sử dụng `{{ params.scale }}`. Khi người dùng bấm **Trigger DAG w/ config** trên giao diện Airflow, họ có thể truyền vào biến `{"scale": "100m"}` (hoặc `1m`, `10m`). DAG sẽ tự động định tuyến đường dẫn cho toàn bộ các script Spark để trỏ đúng vào kích cỡ tệp dữ liệu mong muốn mà không cần sửa code.
+- Tiến trình sau chỉ được kích hoạt khi tiến trình trước đã thành công. 
+- Lớp Silver là tiến trình chịu tải nặng nhất do phải thao tác Shuffle và ghi phân mảnh toàn bộ hàng chục triệu dòng.
+
+### Cơ chế Tham số hóa (Parametrization) để Test Hiệu năng
+DAG được thiết kế cực kỳ linh hoạt để phục vụ việc so sánh Scale:
+Khi người dùng bấm **Trigger DAG w/ config** trên giao diện Airflow, có thể truyền vào biến `{"scale": "1M"}`, `{"scale": "10M"}`, hoặc `{"scale": "100M"}`. 
+
+DAG sẽ tự động định tuyến đường dẫn biến `input_path` để trỏ vào đúng thư mục tệp dữ liệu BHXH tương ứng mà không cần phải sửa bất cứ dòng code nào.
 
 ### Quản trị rủi ro & Restartability (Khả năng chạy lại)
-- **Khắc phục nghẽn tài nguyên:** Xử lý 100 triệu dòng dễ dẫn đến hiện tượng quá tải (RAM/Disk I/O). Nếu một task bị lỗi (văng OOM hoặc đứt kết nối), Airflow sẽ khoanh vùng lỗi tại chính task đó (màu đỏ - Failed hoặc màu vàng - Up_for_retry). 
-- **Tính luỹ đẳng (Idempotency):** Code Spark được thiết lập sử dụng `mode("overwrite")`. Nhờ vậy, khi xử lý lỗi, người vận hành chỉ việc bấm nút **Clear** trên giao diện Airflow tại task bị hỏng để chạy lại. Hệ thống sẽ ghi đè dữ liệu mới lên dữ liệu lỗi mà không lo bị nhân bản (duplicate) các dòng dữ liệu.
-
----
-
-### Kết quả chạy DAG
-
-![Airflow DAG Success](airflow_dag_success.png)
+- **Tính luỹ đẳng (Idempotency):** Code Spark được thiết lập sử dụng `mode("overwrite")`. Nếu tiến trình Gold bị sập do OOM khi xử lý 100M dòng, bạn chỉ cần điều chỉnh RAM, bấm nút **Clear** trên giao diện Airflow tại task đó để chạy lại. Hệ thống sẽ ghi đè lên thư mục lỗi một cách an toàn mà không bị nhân bản (duplicate) dữ liệu.
