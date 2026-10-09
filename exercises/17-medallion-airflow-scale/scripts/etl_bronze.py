@@ -3,26 +3,34 @@ import argparse
 from pyspark.sql import SparkSession
 
 def run_bronze(spark: SparkSession, input_dir: str, output_dir: str):
-    print("=== [BRONZE] Ingesting Raw Data ===")
-    raw_path = os.path.join(input_dir, "*.parquet")
-    df_raw = spark.read.parquet(raw_path)
-    print(f"Raw Input count: {df_raw.count()}")
+    print("=== [BRONZE] Ingesting Raw BHXH Data ===")
     
-    bronze_out = os.path.join(output_dir, "bronze", "orders")
-    df_raw.write.mode("overwrite").parquet(bronze_out)
-    
-    df_bronze_check = spark.read.parquet(bronze_out)
-    print(f"Đã lưu Bronze layer tại: {bronze_out}")
-    print(f"Bronze layer count: {df_bronze_check.count()}")
+    tables = ["MASTER", "DETAIL", "ML_LABELS", "ML_ANOMALY"]
+    for table in tables:
+        raw_path = os.path.join(input_dir, table)
+        if not os.path.exists(raw_path):
+            print(f"Warning: {raw_path} does not exist. Skipping.")
+            continue
+            
+        print(f"Reading {table} from {raw_path}...")
+        df_raw = spark.read.parquet(raw_path)
+        print(f"Raw Input count for {table}: {df_raw.count()}")
+        
+        bronze_out = os.path.join(output_dir, "bronze", table)
+        df_raw.write.mode("overwrite").parquet(bronze_out)
+        
+        df_bronze_check = spark.read.parquet(bronze_out)
+        print(f"Đã lưu Bronze layer tại: {bronze_out}")
+        print(f"Bronze layer count cho {table}: {df_bronze_check.count()}\n")
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, default="c:/Users/Administrator/spark introduce learn/files (5)/1m/data/raw", help="Thư mục chứa dữ liệu gốc")
-    parser.add_argument("--output", type=str, default="c:/Users/Administrator/spark introduce learn/files (5)/1m/data/lakehouse", help="Thư mục Lakehouse")
+    parser.add_argument("--input", type=str, required=True, help="Thư mục chứa dữ liệu gốc")
+    parser.add_argument("--output", type=str, required=True, help="Thư mục Lakehouse")
     args = parser.parse_args()
     
     spark = SparkSession.builder \
-        .appName("ETL_BRONZE") \
+        .appName("ETL_BRONZE_BHXH") \
         .config("spark.driver.memory", "8g") \
         .config("spark.executor.memory", "8g") \
         .config("spark.sql.shuffle.partitions", "200") \
