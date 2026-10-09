@@ -1,35 +1,35 @@
 # Bài 21: Full End-to-End ETL Pipeline (Dữ liệu Bảo hiểm xã hội)
 
-Bài thực hành này minh hoạ một luồng (pipeline) ETL hoàn chỉnh và tích hợp các kỹ thuật tối ưu hóa tốt nhất (Best Practices) của PySpark, sử dụng tập dữ liệu **1 Triệu dòng (1M)** tự sinh của dự án. 
+Đây là bài thực hành tổng hợp nhằm xây dựng một luồng ETL hoàn chỉnh. Quá trình này áp dụng các kỹ thuật tối ưu hóa phổ biến nhất của PySpark trên tập dữ liệu 1 triệu dòng (1M) vừa được tự sinh ở bước trước.
 
-Đây là bài kiểm tra độ tích hợp cuối cùng sau khi bạn đã học qua các bài về Đọc/Ghi, Join, Validate và Partitioning.
+Có thể coi đây là bài kiểm tra độ hiểu biết và khả năng ứng dụng thực tế sau khi bạn đã làm quen với các khái niệm về đọc/ghi dữ liệu, phép kết nối (Join), kiểm thử (Validate) và phân mảnh (Partitioning).
 
-## 🎯 Mục tiêu bài học
-Luồng xử lý (ETL) trong script `etl_pipeline.py` sẽ thực hiện 4 bước cốt lõi:
+## Mục tiêu của bài học
+Chương trình `etl_pipeline.py` sẽ chạy qua 4 bước cơ bản của một luồng ETL chuẩn:
 
-1. **Extract (Trích xuất):** Đọc file Parquet kết hợp với việc **tự khai báo Schema (Schema Enforcement)**. Việc này tối ưu hoá tốc độ I/O do Spark không cần phải tốn chi phí rà quét (infer) toàn bộ file metadata.
-2. **Validate (Kiểm thử & Làm sạch):** Loại bỏ ngay những dữ liệu rác không đáp ứng nghiệp vụ. Ví dụ: những dòng không có số sổ BHXH hoặc mức lương không hợp lý.
-3. **Transform (Biến đổi):**
-   - Làm sạch cột `MA_TINH` (sử dụng Built-in function: `trim`, `upper`).
-   - Tối ưu thay thế việc sử dụng UDF (cực kỳ chậm) bằng **Broadcast Join**. Áp dụng một bảng map (Dimension table) siêu nhỏ trực tiếp vào Memory của các Executor để phân loại "Phân khúc lương".
-4. **Load (Tải dữ liệu & Đánh giá Partitioning):** Ghi dữ liệu ra bộ nhớ với 3 chiến lược Partitioning khác nhau và đo lường sự chênh lệch thời gian, qua đó kết luận chiến lược hiệu quả nhất.
+1. **Trích xuất (Extract):** Quá trình đọc file Parquet sẽ được kết hợp với việc tự khai báo Schema từ trước (Schema Enforcement). Cách này giúp Spark không phải tốn thời gian đọc rà quét toàn bộ file để đoán định dạng, qua đó tối ưu chi phí I/O ngay từ đầu.
+2. **Kiểm thử và Làm sạch (Validate):** Loại bỏ ngay các dòng dữ liệu không đạt yêu cầu nghiệp vụ, chẳng hạn như thiếu số sổ BHXH hoặc mức lương bị âm.
+3. **Biến đổi (Transform):**
+   - Làm sạch cột mã tỉnh bằng các hàm tích hợp sẵn (như `trim` và `upper`).
+   - Phân loại "phân khúc lương" bằng cách thay thế các hàm UDF chậm chạp bằng kỹ thuật Broadcast Join. Cụ thể, một bảng ánh xạ nhỏ gọn sẽ được đẩy thẳng vào bộ nhớ (Memory) của các Executor để tăng tốc độ xử lý.
+4. **Tải dữ liệu và Đánh giá (Load):** Ở bước cuối cùng, dữ liệu sẽ được ghi ra ổ đĩa theo 3 cách phân mảnh khác nhau. Việc so sánh thời gian ghi của 3 cách này sẽ giúp chúng ta hiểu rõ chiến lược nào là tốt nhất cho bài toán thực tế.
 
-## 🚀 Cách chạy chương trình
+## Hướng dẫn chạy chương trình
 
-1. **Đảm bảo dữ liệu nguồn đã có sẵn:**
-   Pipeline yêu cầu phải có dữ liệu tại thư mục `synthetic_bhxh/output/1M/detail`. Nếu bạn chưa có, hãy chạy script sinh dữ liệu 1M ở gốc dự án trước.
-2. **Khởi chạy Pipeline:**
-   Mở terminal tại thư mục bài 21 và chạy lệnh:
+1. **Chuẩn bị dữ liệu:**
+   Để chương trình hoạt động, bạn cần đảm bảo đã có sẵn dữ liệu tại thư mục `synthetic_bhxh/output/1M/detail`. Nếu chưa có, bạn cần quay lại thư mục gốc dự án và chạy script sinh dữ liệu 1M trước.
+2. **Khởi chạy:**
+   Mở terminal tại thư mục bài 21 này và chạy lệnh:
    ```bash
    python etl_pipeline.py
    ```
 
-## 📊 Giải thích kết quả Partitioning (Load)
-Tại bước 4, dữ liệu sẽ được ghi ra 3 thư mục khác nhau. Bạn sẽ quan sát thấy:
+## Đánh giá kết quả phân mảnh (Partitioning)
+Ở bước Load, chương trình sẽ tạo ra 3 thư mục tương ứng với 3 cách ghi dữ liệu khác nhau. Khi chạy xong, bạn sẽ thấy kết quả phản ánh các đặc điểm sau:
 
-- **1. Ghi KHÔNG Partition (`1_no_partition`):** Thường ghi khá nhanh vì không tốn chi phí tổ chức file, nhưng khi bạn query phân tích sau này (như tìm theo tỉnh) thì chi phí quét dữ liệu cực kỳ lớn (Full scan).
-- **2. Ghi Partition theo Mã Tỉnh (`2_partition_tinh_thanh`):** Đây là **điểm cân bằng tối ưu nhất**. Có 63 tỉnh thành => số lượng phân vùng (Partition) ở mức trung bình (~63 folder). Không bị chia quá nhỏ, và khi query theo từng tỉnh sau này sẽ rất nhanh.
-- **3. Ghi Partition theo Phân Khúc (`3_partition_phan_khuc`):** Phân khúc chỉ có 3 nhóm (Phổ thông, Trung cấp, Cao cấp). Việc chia partition theo cột này sẽ làm phát sinh hiện tượng **Data Skewness (Lệch dữ liệu)**. Nhóm Phổ thông có thể chứa hàng triệu dòng, trong khi nhóm Cao cấp chỉ có vài chục ngàn dòng. Các Executor xử lý nhóm Phổ thông sẽ bị quá tải, gây nghẽn cổ chai (Bottleneck) cho toàn bộ hệ thống. 
+- **Ghi không phân mảnh (`1_no_partition`):** Tốc độ ghi thường khá nhanh do hệ thống không mất thời gian tổ chức lại thư mục. Nhưng bù lại, khi truy vấn phân tích (ví dụ: cần lọc ra một tỉnh cụ thể), chi phí tìm kiếm sẽ rất tốn kém vì hệ thống phải quét lại toàn bộ dữ liệu (Full scan).
+- **Phân mảnh theo mã tỉnh (`2_partition_tinh_thanh`):** Đây là lựa chọn cân bằng và tối ưu nhất. Với 63 tỉnh thành, lượng phân mảnh sinh ra (~63 thư mục) ở mức vừa phải, không làm vỡ vụn file. Khi cần truy vấn dữ liệu của một tỉnh sau này, tốc độ đọc sẽ được cải thiện rõ rệt.
+- **Phân mảnh theo phân khúc lương (`3_partition_phan_khuc`):** Phân khúc chỉ bao gồm 3 nhóm (Phổ thông, Trung cấp, Cao cấp). Nếu chia partition theo tiêu chí này, dữ liệu sẽ bị lệch (Data Skewness). Lượng người ở nhóm phổ thông quá lớn so với các nhóm còn lại khiến các Executor xử lý nhóm này bị quá tải, gây nghẽn cổ chai cho toàn bộ hệ thống.
 
-## 🧹 Lưu ý
-- Thư mục đầu ra `output_bhxh_etl` của bài này chứa các tập dữ liệu parquet và đã được đưa vào `.gitignore` để không bị push nhầm rác lên GitHub. Môi trường của bạn sẽ tự động dọn dẹp hoặc bạn có thể xoá chúng sau khi quan sát kết quả.
+## Một vài lưu ý thêm
+Thư mục đầu ra `output_bhxh_etl` của bài tập này đã được đưa vào `.gitignore` để tránh việc vô tình đẩy file dữ liệu nặng lên GitHub. Bạn có thể thoải mái chạy thử và kiểm tra, sau đó môi trường sẽ tự động dọn dẹp hoặc bạn có thể tự tay xoá thư mục đó nếu muốn.
