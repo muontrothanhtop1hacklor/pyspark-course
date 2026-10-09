@@ -66,6 +66,9 @@ PHASE1_FILE = RES / "phase1_done.txt"
 PARTIAL_KEY = B / "_answer_key" / "error_keys_100M_PARTIAL.csv"
 PARTIAL_MISSING = B / "_answer_key" / "error_keys_100M_PARTIAL.missing.txt"
 PHASE1 = list(range(N_EXISTING, NCHUNKS))
+MAX_PROCS = 6
+RAM_RESERVE_MB = 2048
+PEAK_MB_STEP2 = 2048
 
 ORDER = list(range(N_EXISTING, NCHUNKS)) + list(range(N_EXISTING))
 
